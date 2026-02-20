@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코페르니쿠스 지동설 — Copernican Heliocentric Model (1543 AD)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #fff;
+    user-select: none;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .title-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .title-bar h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #f0e6d3;
+    text-shadow: 0 0 20px rgba(255, 200, 100, 0.5), 0 0 60px rgba(255, 150, 50, 0.2);
+    margin-bottom: 4px;
+  }
+
+  .title-bar .subtitle {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(240, 230, 211, 0.6);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .controls label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+  }
+
+  .controls input[type="range"] {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #f0c060;
+    box-shadow: 0 0 8px rgba(240, 192, 96, 0.6);
+    cursor: pointer;
+  }
+
+  .btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Noto Sans KR', sans-serif;
+    pointer-events: auto;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .btn.active {
+    background: rgba(240, 192, 96, 0.15);
+    border-color: rgba(240, 192, 96, 0.4);
+    color: #f0c060;
+  }
+
+  .legend {
+    position: fixed;
+    top: 100px;
+    right: 24px;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 180px;
+  }
+
+  .legend h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .legend-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .legend-item.sub-item {
+    padding-left: 26px;
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-dot.small {
+    width: 7px; height: 7px;
+  }
+
+  .legend-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .legend-label small {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 1px;
+  }
+
+  .info-panel {
+    position: fixed;
+    bottom: 90px;
+    left: 24px;
+    z-index: 20;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 300px;
+    pointer-events: auto;
+  }
+
+  .info-panel h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-panel p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .info-panel .highlight {
+    color: #f0c060;
+  }
+
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .speed-display {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    min-width: 30px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="title-bar">
+  <h1>COPERNICAN SYSTEM</h1>
+  <div class="subtitle">코페르니쿠스 지동설 — AD 1543</div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="info-panel">
+  <h3>모델 설명</h3>
+  <p>
+    코페르니쿠스는 <span class="highlight">태양</span>을 우주의 중심에 놓고,
+    지구를 포함한 행성들이 태양 주위를 공전한다고 주장했다.
+    이 모델에서 <span class="highlight">역행운동</span>은
+    궤도 속도가 다른 행성들 사이의 상대운동으로 자연스럽게 설명된다.
+    다만 여전히 <span class="highlight">원궤도</span>를 사용했다는 한계가 있다.
+  </p>
+</div>
+
+<div class="controls">
+  <label>속도</label>
+  <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1">
+  <span class="speed-display" id="speedDisplay">1.0x</span>
+  <div class="divider"></div>
+  <button class="btn" id="btnOrbits" onclick="toggleOrbits()">궤도</button>
+  <button class="btn active" id="btnTrails" onclick="toggleTrails()">궤적</button>
+  <button class="btn" id="btnRetrograde" onclick="toggleRetrograde()">역행 설명</button>
+  <button class="btn active" id="btnLabels" onclick="toggleLabels()">라벨</button>
+  <div class="divider"></div>
+  <button class="btn" id="btnPause" onclick="togglePause()">⏸</button>
+</div>
+
+<script>
+// ============================================================
+// Canvas setup
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============================================================
+// State
+// ============================================================
+let showOrbits = false;
+let showTrails = true;
+let showRetrograde = false;
+let showLabels = true;
+let paused = false;
+let speedMul = 1;
+let time = 0;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedDisplay = document.getElementById('speedDisplay');
+speedSlider.addEventListener('input', () => {
+  speedMul = parseFloat(speedSlider.value);
+  speedDisplay.textContent = speedMul.toFixed(1) + 'x';
+});
+
+function setBtn(id, active) {
+  document.getElementById(id).classList.toggle('active', active);
+}
+function toggleOrbits()     { showOrbits = !showOrbits;         setBtn('btnOrbits', showOrbits); }
+function toggleTrails()     { showTrails = !showTrails;         setBtn('btnTrails', showTrails); }
+function toggleRetrograde() {
+  showRetrograde = !showRetrograde;
+  setBtn('btnRetrograde', showRetrograde);
+  if (showRetrograde) { skyProjections = []; }
+}
+function toggleLabels()     { showLabels = !showLabels;         setBtn('btnLabels', showLabels); }
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? '▶' : '⏸';
+}
+
+// ============================================================
+// Stars background
+// ============================================================
+const stars = [];
+for (let i = 0; i < 700; i++) {
+  stars.push({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.4 + 0.2,
+    brightness: Math.random(),
+    twinkleSpeed: Math.random() * 2 + 1,
+    twinklePhase: Math.random() * Math.PI * 2,
+  });
+}
+
+function drawStars(t) {
+  for (const s of stars) {
+    const flicker = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+    const alpha = 0.15 + 0.6 * s.brightness * flicker;
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220, 230, 255, ${alpha})`;
+    ctx.fill();
+  }
+}
+
+// ============================================================
+// Scale helper
+// ============================================================
+function getScale() {
+  return Math.min(W, H) / 2.4;
+}
+
+// ============================================================
+// Planetary data — Copernican heliocentric circular orbits
+// Orbital radii are relative, speeds approximate inverse sqrt of radius
+// ============================================================
+const planets = [
+  {
+    name: '수성',
+    nameEn: 'Mercury',
+    color: '#b0a090',
+    glow: 'rgba(176,160,144,0.35)',
+    orbitR: 0.12,
+    speed: 4.15,     // fastest inner planet
+    size: 3.5,
+    trailLen: 400,
+    trail: [],
+    hueBase: 30,
+    hueRange: 80,
+    phase: 0.7,
+  },
+  {
+    name: '금성',
+    nameEn: 'Venus',
+    color: '#f0d8a0',
+    glow: 'rgba(240,216,160,0.4)',
+    orbitR: 0.20,
+    speed: 1.625,
+    size: 5,
+    trailLen: 500,
+    trail: [],
+    hueBase: 40,
+    hueRange: 70,
+    phase: 2.1,
+  },
+  {
+    name: '지구',
+    nameEn: 'Earth',
+    color: '#5dadec',
+    glow: 'rgba(93,173,236,0.4)',
+    orbitR: 0.30,
+    speed: 1.0,       // reference speed
+    size: 5.5,
+    trailLen: 600,
+    trail: [],
+    hueBase: 200,
+    hueRange: 60,
+    phase: 0,
+    isEarth: true,
+    // Moon
+    moon: {
+      name: '달',
+      nameEn: 'Moon',
+      color: '#c8c8d0',
+      glow: 'rgba(200,200,210,0.4)',
+      orbitR: 0.022,
+      speed: 13.0,   // Moon orbits Earth ~13x per Earth year
+      size: 2.5,
+      phase: 0,
+    },
+    // Rotation indicator angle
+    rotAngle: 0,
+  },
+  {
+    name: '화성',
+    nameEn: 'Mars',
+    color: '#e06040',
+    glow: 'rgba(224,96,64,0.45)',
+    orbitR: 0.43,
+    speed: 0.532,
+    size: 4.5,
+    trailLen: 900,
+    trail: [],
+    hueBase: 0,
+    hueRange: 90,
+    phase: 1.2,
+  },
+  {
+    name: '목성',
+    nameEn: 'Jupiter',
+    color: '#d0b888',
+    glow: 'rgba(208,184,136,0.35)',
+    orbitR: 0.62,
+    speed: 0.0843,
+    size: 8,
+    trailLen: 1000,
+    trail: [],
+    hueBase: 30,
+    hueRange: 60,
+    phase: 3.5,
+  },
+  {
+    name: '토성',
+    nameEn: 'Saturn',
+    color: '#c8a860',
+    glow: 'rgba(200,168,96,0.3)',
+    orbitR: 0.82,
+    speed: 0.0339,
+    size: 7,
+    trailLen: 1200,
+    trail: [],
+    hueBase: 40,
+    hueRange: 50,
+    phase: 5.0,
+    hasRing: true,
+  },
+];
+
+// Index references
+const EARTH_IDX = 2;
+const MARS_IDX = 3;
+
+// ============================================================
+// Build legend
+// ============================================================
+const legendEl = document.getElementById('legend');
+legendEl.innerHTML = '<h3>천체</h3>';
+
+// Sun first
+const sunItem = document.createElement('div');
+sunItem.className = 'legend-item';
+sunItem.innerHTML = `
+  <div class="legend-dot" style="background:#ffd040;box-shadow:0 0 8px rgba(255,200,50,0.6)"></div>
+  <div class="legend-label">태양<small>Sol</small></div>
+`;
+legendEl.appendChild(sunItem);
+
+planets.forEach((p) => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `
+    <div class="legend-dot" style="background:${p.color};box-shadow:0 0 6px ${p.glow}"></div>
+    <div class="legend-label">${p.name}<small>${p.nameEn}</small></div>
+  `;
+  legendEl.appendChild(item);
+
+  // Moon as sub-item under Earth
+  if (p.isEarth && p.moon) {
+    const moonItem = document.createElement('div');
+    moonItem.className = 'legend-item sub-item';
+    moonItem.innerHTML = `
+      <div class="legend-dot small" style="background:${p.moon.color};box-shadow:0 0 4px ${p.moon.glow}"></div>
+      <div class="legend-label">${p.moon.name}<small>${p.moon.nameEn}</small></div>
+    `;
+    legendEl.appendChild(moonItem);
+  }
+});
+
+// ============================================================
+// Compute planet position (heliocentric circular orbit)
+// ============================================================
+function getPlanetPos(planet, t, scale) {
+  const angle = planet.phase + t * planet.speed;
+  const r = planet.orbitR * scale;
+  const px = cx + r * Math.cos(angle);
+  const py = cy + r * Math.sin(angle);
+  return { px, py, angle, r };
+}
+
+function getMoonPos(earth, moon, t, scale) {
+  const earthPos = getPlanetPos(earth, t, scale);
+  const moonAngle = moon.phase + t * moon.speed;
+  const moonR = moon.orbitR * scale;
+  const mx = earthPos.px + moonR * Math.cos(moonAngle);
+  const my = earthPos.py + moonR * Math.sin(moonAngle);
+  return { mx, my, moonAngle, moonR, earthPos };
+}
+
+// ============================================================
+// Sky projection for retrograde explanation
+// ============================================================
+let skyProjections = [];
+const MAX_SKY_PROJECTIONS = 600;
+
+function computeSkyProjection(earthPos, marsPos, scale) {
+  // Line from Earth through Mars, projected to celestial sphere arc
+  const dx = marsPos.px - earthPos.px;
+  const dy = marsPos.py - earthPos.py;
+  const angle = Math.atan2(dy, dx);
+  // Project to the sky sphere radius
+  const skyR = 0.95 * scale;
+  const sx = cx + skyR * Math.cos(angle);
+  const sy = cy + skyR * Math.sin(angle);
+  return { sx, sy, angle, earthX: earthPos.px, earthY: earthPos.py, marsX: marsPos.px, marsY: marsPos.py };
+}
+
+// ============================================================
+// Drawing helpers
+// ============================================================
+function drawDashedCircle(cx, cy, r, color, alpha, dashLen) {
+  ctx.beginPath();
+  ctx.setLineDash(dashLen || [4, 6]);
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+}
+
+function drawSolidCircle(ccx, ccy, r, color, alpha) {
+  ctx.beginPath();
+  ctx.arc(ccx, ccy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawGlowCircle(x, y, r, color, glowColor, glowR) {
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, glowR || r * 4);
+  grad.addColorStop(0, glowColor);
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(x, y, glowR || r * 4, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawTrail(trail, body) {
+  if (trail.length < 3) return;
+  const len = trail.length;
+  const hueBase = body.hueBase || 0;
+  const hueRange = body.hueRange || 60;
+
+  for (let i = 1; i < len; i++) {
+    const t = i / len;
+    const p0 = trail[i - 1];
+    const p1 = trail[i];
+    const hue = (hueBase + t * hueRange) % 360;
+    const sat = 70 + 20 * Math.sin(t * Math.PI);
+    const light = 50 + 15 * t;
+    const alpha = t * 0.55;
+    const width = 0.6 + t * 1.8;
+
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+function drawSaturnRing(x, y, size) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y, size * 2.2, size * 0.7, -0.3, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(200,180,120,0.5)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Inner ring
+  ctx.beginPath();
+  ctx.ellipse(x, y, size * 1.7, size * 0.52, -0.3, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(180,160,100,0.3)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLabel(text, x, y, color) {
+  ctx.font = '12px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = color || 'rgba(255,255,255,0.7)';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, y);
+}
+
+// ============================================================
+// Draw Sun — the centerpiece with spectacular corona
+// ============================================================
+function drawSun(t) {
+  const x = cx, y = cy;
+
+  // Outermost soft glow
+  const g0 = ctx.createRadialGradient(x, y, 0, x, y, 120);
+  g0.addColorStop(0, 'rgba(255, 200, 50, 0.06)');
+  g0.addColorStop(0.4, 'rgba(255, 150, 30, 0.03)');
+  g0.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(x, y, 120, 0, Math.PI * 2);
+  ctx.fillStyle = g0;
+  ctx.fill();
+
+  // Corona streamers — long dynamic rays
+  const streamerCount = 24;
+  for (let i = 0; i < streamerCount; i++) {
+    const baseAngle = (i / streamerCount) * Math.PI * 2;
+    const wobble = 0.03 * Math.sin(t * 1.5 + i * 2.7);
+    const angle = baseAngle + wobble + t * 0.08;
+    const len = 45 + 20 * Math.sin(t * 2.3 + i * 1.3) + 10 * Math.sin(t * 3.7 + i * 0.9);
+    const width = 2.5 + 1.5 * Math.sin(t * 1.8 + i * 2.1);
+
+    const grad = ctx.createLinearGradient(x, y, x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+    grad.addColorStop(0, 'rgba(255, 220, 80, 0.2)');
+    grad.addColorStop(0.3, 'rgba(255, 180, 40, 0.08)');
+    grad.addColorStop(1, 'transparent');
+
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * 16, y + Math.sin(angle) * 16);
+    ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Inner corona rays — shorter, brighter
+  const innerRayCount = 16;
+  for (let i = 0; i < innerRayCount; i++) {
+    const angle = (i / innerRayCount) * Math.PI * 2 + t * 0.15;
+    const len = 28 + 8 * Math.sin(t * 3.5 + i * 1.8);
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * 14, y + Math.sin(angle) * 14);
+    ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+    ctx.strokeStyle = 'rgba(255, 230, 120, 0.15)';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Multi-layer glow halos
+  const glowLayers = [
+    { r: 80, color: 'rgba(255, 180, 40, 0.04)' },
+    { r: 55, color: 'rgba(255, 200, 60, 0.07)' },
+    { r: 38, color: 'rgba(255, 210, 80, 0.12)' },
+    { r: 26, color: 'rgba(255, 220, 100, 0.2)' },
+    { r: 20, color: 'rgba(255, 230, 130, 0.3)' },
+  ];
+  for (const layer of glowLayers) {
+    const pulse = 1 + 0.04 * Math.sin(t * 2.5);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, layer.r * pulse);
+    g.addColorStop(0, layer.color);
+    g.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(x, y, layer.r * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  // Sun body
+  const pulse = 1 + 0.02 * Math.sin(t * 3);
+  const sunR = 14 * pulse;
+  const sg = ctx.createRadialGradient(x - 3, y - 3, 0, x, y, sunR);
+  sg.addColorStop(0, '#fffbe8');
+  sg.addColorStop(0.15, '#fff4c0');
+  sg.addColorStop(0.4, '#ffd040');
+  sg.addColorStop(0.7, '#f0a020');
+  sg.addColorStop(1, '#c07010');
+  ctx.beginPath();
+  ctx.arc(x, y, sunR, 0, Math.PI * 2);
+  ctx.fillStyle = sg;
+  ctx.fill();
+
+  // Bright specular on sun
+  ctx.beginPath();
+  ctx.arc(x - 4, y - 4, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fill();
+
+  // Label
+  if (showLabels) {
+    drawLabel('태양', x, y + sunR + 16, 'rgba(255,210,80,0.85)');
+  }
+}
+
+// ============================================================
+// Draw Earth with rotation indicator
+// ============================================================
+function drawEarthBody(x, y, t, size) {
+  // Atmosphere glow
+  const atmoGrad = ctx.createRadialGradient(x, y, size, x, y, size * 3.5);
+  atmoGrad.addColorStop(0, 'rgba(80, 170, 255, 0.2)');
+  atmoGrad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(x, y, size * 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = atmoGrad;
+  ctx.fill();
+
+  // Earth body gradient
+  const eg = ctx.createRadialGradient(x - size * 0.25, y - size * 0.25, 0, x, y, size);
+  eg.addColorStop(0, '#7ec8f0');
+  eg.addColorStop(0.35, '#4a9de0');
+  eg.addColorStop(0.6, '#2a7ab8');
+  eg.addColorStop(0.85, '#1a5a90');
+  eg.addColorStop(1, '#0e3a60');
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fillStyle = eg;
+  ctx.fill();
+
+  // Green continents hint (subtle)
+  const rotA = t * 8; // Earth rotation
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.clip();
+  // Draw a few green patches that rotate
+  const patchAlpha = 0.25;
+  for (let i = 0; i < 3; i++) {
+    const pa = rotA + i * 2.1;
+    const px2 = x + size * 0.4 * Math.cos(pa);
+    const py2 = y + size * 0.3 * Math.sin(pa + 0.5);
+    ctx.beginPath();
+    ctx.arc(px2, py2, size * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(60, 140, 80, ${patchAlpha})`;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Specular highlight
+  ctx.beginPath();
+  ctx.arc(x - size * 0.25, y - size * 0.35, size * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fill();
+
+  // Rotation indicator — a small spinning line
+  const riAngle = t * 8;
+  const riLen = size + 4;
+  ctx.beginPath();
+  ctx.arc(x, y, size + 3, riAngle, riAngle + 0.5);
+  ctx.strokeStyle = 'rgba(150, 220, 255, 0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Arrowhead
+  const aex = x + (size + 3) * Math.cos(riAngle + 0.5);
+  const aey = y + (size + 3) * Math.sin(riAngle + 0.5);
+  ctx.beginPath();
+  ctx.arc(aex, aey, 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(150, 220, 255, 0.5)';
+  ctx.fill();
+}
+
+// ============================================================
+// Draw Moon
+// ============================================================
+function drawMoon(mx, my, size) {
+  // Subtle glow
+  const mg = ctx.createRadialGradient(mx, my, 0, mx, my, size * 3);
+  mg.addColorStop(0, 'rgba(200, 200, 220, 0.15)');
+  mg.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(mx, my, size * 3, 0, Math.PI * 2);
+  ctx.fillStyle = mg;
+  ctx.fill();
+
+  // Moon body
+  const moonGrad = ctx.createRadialGradient(mx - size * 0.2, my - size * 0.2, 0, mx, my, size);
+  moonGrad.addColorStop(0, '#e0e0e8');
+  moonGrad.addColorStop(0.5, '#b0b0b8');
+  moonGrad.addColorStop(1, '#808088');
+  ctx.beginPath();
+  ctx.arc(mx, my, size, 0, Math.PI * 2);
+  ctx.fillStyle = moonGrad;
+  ctx.fill();
+}
+
+// ============================================================
+// Retrograde explanation drawing
+// ============================================================
+function drawRetrogradeExplanation(earthPos, marsPos, scale, t) {
+  const skyR = 0.95 * scale;
+
+  // Draw the celestial sphere arc (the "night sky" projection surface)
+  // Only draw the relevant portion — an arc roughly opposite the Sun from Earth
+  ctx.beginPath();
+  ctx.arc(cx, cy, skyR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(100, 140, 255, 0.08)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label the sphere
+  const lblAngle = -Math.PI / 2 - 0.3;
+  const lblX = cx + (skyR + 20) * Math.cos(lblAngle);
+  const lblY = cy + (skyR + 20) * Math.sin(lblAngle);
+  ctx.font = '11px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(100, 150, 255, 0.4)';
+  ctx.textAlign = 'center';
+  ctx.fillText('항성 천구', lblX, lblY);
+
+  // Compute projection of line of sight from Earth through Mars onto sky sphere
+  const dx = marsPos.px - earthPos.px;
+  const dy = marsPos.py - earthPos.py;
+  const losAngle = Math.atan2(dy, dx);
+
+  const projX = cx + skyR * Math.cos(losAngle);
+  const projY = cy + skyR * Math.sin(losAngle);
+
+  // Draw the line of sight: Earth -> Mars -> Projection
+  // First segment: Earth to Mars (solid)
+  ctx.beginPath();
+  ctx.moveTo(earthPos.px, earthPos.py);
+  ctx.lineTo(marsPos.px, marsPos.py);
+  ctx.strokeStyle = 'rgba(255, 120, 80, 0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Second segment: Mars to sky projection (dashed)
+  ctx.beginPath();
+  ctx.setLineDash([5, 5]);
+  ctx.moveTo(marsPos.px, marsPos.py);
+  ctx.lineTo(projX, projY);
+  ctx.strokeStyle = 'rgba(255, 160, 80, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Bright dot at projection point
+  const projGlow = ctx.createRadialGradient(projX, projY, 0, projX, projY, 12);
+  projGlow.addColorStop(0, 'rgba(255, 180, 80, 0.7)');
+  projGlow.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(projX, projY, 12, 0, Math.PI * 2);
+  ctx.fillStyle = projGlow;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(projX, projY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffcc60';
+  ctx.fill();
+
+  // Store projection in trail
+  if (!paused) {
+    skyProjections.push({ x: projX, y: projY, angle: losAngle, time: t });
+    if (skyProjections.length > MAX_SKY_PROJECTIONS) skyProjections.shift();
+  }
+
+  // Draw sky projection trail
+  if (skyProjections.length > 2) {
+    const len = skyProjections.length;
+
+    // Detect retrograde segments: when the projected angle moves backwards
+    const retroSegments = [];
+    let inRetro = false;
+    let retroStart = -1;
+
+    for (let i = 1; i < len; i++) {
+      let da = skyProjections[i].angle - skyProjections[i - 1].angle;
+      // Normalize
+      if (da > Math.PI) da -= Math.PI * 2;
+      if (da < -Math.PI) da += Math.PI * 2;
+
+      // In the Copernican model, Mars generally moves in one direction (positive angle change)
+      // Retrograde is when it reverses. We define retrograde as when angle change is negative
+      // (since planets orbit counter-clockwise and line-of-sight angle generally increases)
+      const isRetro = da < -0.0005;
+
+      if (isRetro && !inRetro) {
+        retroStart = i;
+        inRetro = true;
+      } else if (!isRetro && inRetro) {
+        retroSegments.push({ start: retroStart, end: i });
+        inRetro = false;
+      }
+    }
+    if (inRetro) {
+      retroSegments.push({ start: retroStart, end: len - 1 });
+    }
+
+    // Draw normal trail on the sky arc
+    for (let i = 1; i < len; i++) {
+      const frac = i / len;
+      const alpha = 0.1 + frac * 0.5;
+      const p0 = skyProjections[i - 1];
+      const p1 = skyProjections[i];
+
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.strokeStyle = `rgba(255, 200, 100, ${alpha * 0.5})`;
+      ctx.lineWidth = 1.5 + frac;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Highlight retrograde segments
+    for (const seg of retroSegments) {
+      // Draw bright retrograde trail
+      for (let i = seg.start + 1; i <= seg.end && i < len; i++) {
+        const frac = (i - seg.start) / (seg.end - seg.start + 1);
+        const p0 = skyProjections[i - 1];
+        const p1 = skyProjections[i];
+
+        // Bright red-orange glow for retrograde
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.strokeStyle = `rgba(255, 80, 60, ${0.4 + frac * 0.4})`;
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Inner bright line
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.strokeStyle = `rgba(255, 160, 80, ${0.5 + frac * 0.4})`;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+
+      // Label "역행" at the midpoint of the retrograde segment
+      const midIdx = Math.floor((seg.start + seg.end) / 2);
+      if (midIdx < len) {
+        const mp = skyProjections[midIdx];
+        // Position label slightly outside the arc
+        const labelAngle = Math.atan2(mp.y - cy, mp.x - cx);
+        const lx = cx + (skyR + 22) * Math.cos(labelAngle);
+        const ly = cy + (skyR + 22) * Math.sin(labelAngle);
+
+        // Glow behind text
+        const tGlow = ctx.createRadialGradient(lx, ly, 0, lx, ly, 20);
+        tGlow.addColorStop(0, 'rgba(255, 80, 60, 0.15)');
+        tGlow.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(lx, ly, 20, 0, Math.PI * 2);
+        ctx.fillStyle = tGlow;
+        ctx.fill();
+
+        ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = 'rgba(255, 120, 80, 0.9)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('역행', lx, ly);
+
+        // Draw small arrows at retrograde start and end
+        if (seg.start < len && seg.end < len) {
+          const startP = skyProjections[seg.start];
+          const endP = skyProjections[seg.end];
+
+          // Start marker
+          ctx.beginPath();
+          ctx.arc(startP.x, startP.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 200, 80, 0.7)';
+          ctx.fill();
+
+          // End marker
+          ctx.beginPath();
+          ctx.arc(endP.x, endP.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 100, 60, 0.7)';
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // Small label near the line of sight
+  const midLX = (earthPos.px + marsPos.px) / 2;
+  const midLY = (earthPos.py + marsPos.py) / 2;
+  ctx.font = '10px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255, 180, 100, 0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('시선', midLX + 10, midLY - 8);
+}
+
+// ============================================================
+// Main draw loop
+// ============================================================
+function draw(timestamp) {
+  const dt = 0.004 * speedMul;
+  if (!paused) time += dt;
+
+  const scale = getScale();
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Deep space background
+  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+  bgGrad.addColorStop(0, '#0c0c20');
+  bgGrad.addColorStop(0.4, '#06061a');
+  bgGrad.addColorStop(1, '#000008');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  drawStars(time);
+
+  // Fixed stars sphere at outermost edge
+  const sphereR = 0.96 * scale;
+  ctx.beginPath();
+  ctx.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Zodiac markers on outer sphere
+  const zodiacNames = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const zx = cx + (sphereR + 16) * Math.cos(a);
+    const zy = cy + (sphereR + 16) * Math.sin(a);
+    ctx.font = '14px serif';
+    ctx.fillStyle = 'rgba(255,220,150,0.1)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(zodiacNames[i], zx, zy);
+
+    // Small tick
+    const tx1 = cx + sphereR * Math.cos(a);
+    const ty1 = cy + sphereR * Math.sin(a);
+    const tx2 = cx + (sphereR + 6) * Math.cos(a);
+    const ty2 = cy + (sphereR + 6) * Math.sin(a);
+    ctx.beginPath();
+    ctx.moveTo(tx1, ty1);
+    ctx.lineTo(tx2, ty2);
+    ctx.strokeStyle = 'rgba(255,220,150,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Draw orbit circles
+  if (showOrbits) {
+    for (const planet of planets) {
+      const r = planet.orbitR * scale;
+      drawDashedCircle(cx, cy, r, planet.color, 0.15, [3, 8]);
+    }
+  }
+
+  // Compute all positions first
+  const positions = planets.map(p => getPlanetPos(p, time, scale));
+
+  // Draw trails
+  for (let i = 0; i < planets.length; i++) {
+    const planet = planets[i];
+    const pos = positions[i];
+
+    if (!paused) {
+      planet.trail.push({ x: pos.px, y: pos.py });
+      if (planet.trail.length > planet.trailLen) planet.trail.shift();
+    }
+
+    if (showTrails && planet.trailLen > 0) {
+      drawTrail(planet.trail, planet);
+    }
+  }
+
+  // Draw retrograde explanation (behind planets, above trails)
+  if (showRetrograde) {
+    const earthPos = positions[EARTH_IDX];
+    const marsPos = positions[MARS_IDX];
+    drawRetrogradeExplanation(earthPos, marsPos, scale, time);
+  }
+
+  // Draw Sun (center)
+  drawSun(time);
+
+  // Draw planets
+  for (let i = 0; i < planets.length; i++) {
+    const planet = planets[i];
+    const pos = positions[i];
+
+    if (planet.isEarth) {
+      // Earth
+      drawEarthBody(pos.px, pos.py, time, planet.size);
+
+      // Moon orbit line (very subtle)
+      if (showOrbits) {
+        drawSolidCircle(pos.px, pos.py, planet.moon.orbitR * scale, 'rgba(200,200,220,0.15)', 0.15);
+      }
+
+      // Moon
+      const moonData = getMoonPos(planet, planet.moon, time, scale);
+      drawMoon(moonData.mx, moonData.my, planet.moon.size);
+
+      if (showLabels) {
+        drawLabel('지구', pos.px, pos.py + planet.size + 14, 'rgba(110,190,255,0.8)');
+        drawLabel('달', moonData.mx, moonData.my + planet.moon.size + 10, 'rgba(200,200,220,0.6)');
+      }
+    } else {
+      // Regular planet
+      drawGlowCircle(pos.px, pos.py, planet.size, planet.color, planet.glow, planet.size * 3.5);
+
+      // Specular highlight
+      ctx.beginPath();
+      ctx.arc(pos.px - planet.size * 0.25, pos.py - planet.size * 0.3, planet.size * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fill();
+
+      // Saturn ring
+      if (planet.hasRing) {
+        drawSaturnRing(pos.px, pos.py, planet.size);
+      }
+
+      // Label
+      if (showLabels) {
+        drawLabel(planet.name, pos.px, pos.py + planet.size + 14, planet.color);
+      }
+    }
+  }
+
+  // Highlight Earth and Mars when retrograde mode is on
+  if (showRetrograde) {
+    const earthPos = positions[EARTH_IDX];
+    const marsPos = positions[MARS_IDX];
+
+    // Pulsing highlight rings
+    const pulseR = 1 + 0.15 * Math.sin(time * 6);
+
+    // Earth highlight
+    ctx.beginPath();
+    ctx.arc(earthPos.px, earthPos.py, planets[EARTH_IDX].size * 2.2 * pulseR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(100, 180, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Mars highlight
+    ctx.beginPath();
+    ctx.arc(marsPos.px, marsPos.py, planets[MARS_IDX].size * 2.2 * pulseR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 100, 60, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

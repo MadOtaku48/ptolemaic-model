@@ -3,921 +3,285 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>프톨레마이오스의 천동설 모델 — Ptolemaic Geocentric Model</title>
+<title>천문학 모델의 역사 — History of Astronomical Models</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #000;
-    overflow: hidden;
+    background: #05050f;
+    min-height: 100vh;
     font-family: 'Noto Sans KR', sans-serif;
     color: #fff;
-    user-select: none;
+    overflow-x: hidden;
   }
 
-  canvas {
-    display: block;
-    position: fixed;
-    top: 0; left: 0;
-  }
-
-  #ui-overlay {
+  canvas#bg {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 10;
+    z-index: 0;
   }
 
-  .title-bar {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  header {
     text-align: center;
-    z-index: 20;
-    pointer-events: none;
+    margin-bottom: 64px;
   }
 
-  .title-bar h1 {
+  header h1 {
     font-family: 'Cinzel', serif;
-    font-size: 28px;
+    font-size: clamp(28px, 5vw, 48px);
     font-weight: 700;
-    letter-spacing: 4px;
-    color: #f0e6d3;
-    text-shadow: 0 0 20px rgba(255, 200, 100, 0.5), 0 0 60px rgba(255, 150, 50, 0.2);
-    margin-bottom: 4px;
-  }
-
-  .title-bar .subtitle {
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(240, 230, 211, 0.6);
     letter-spacing: 6px;
-    text-transform: uppercase;
-  }
-
-  .controls {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    z-index: 20;
-    pointer-events: auto;
-    background: rgba(10, 10, 30, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 12px 24px;
-  }
-
-  .controls label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    letter-spacing: 1px;
-  }
-
-  .controls input[type="range"] {
-    -webkit-appearance: none;
-    width: 120px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-
-  .controls input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #f0c060;
-    box-shadow: 0 0 8px rgba(240, 192, 96, 0.6);
-    cursor: pointer;
-  }
-
-  .btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.7);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-family: 'Noto Sans KR', sans-serif;
-    pointer-events: auto;
-  }
-
-  .btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-  }
-
-  .btn.active {
-    background: rgba(240, 192, 96, 0.15);
-    border-color: rgba(240, 192, 96, 0.4);
-    color: #f0c060;
-  }
-
-  .legend {
-    position: fixed;
-    top: 100px;
-    right: 24px;
-    z-index: 20;
-    pointer-events: auto;
-    background: rgba(10, 10, 30, 0.65);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 16px 20px;
-    min-width: 180px;
-  }
-
-  .legend h3 {
-    font-size: 11px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    color: #f0e6d3;
+    text-shadow: 0 0 30px rgba(255,200,100,0.3), 0 0 80px rgba(255,150,50,0.1);
     margin-bottom: 12px;
   }
 
-  .legend-item {
+  header .subtitle {
+    font-size: clamp(13px, 2vw, 16px);
+    font-weight: 300;
+    color: rgba(240,230,211,0.5);
+    letter-spacing: 4px;
+  }
+
+  .timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(240,192,96,0.3) 10%, rgba(240,192,96,0.3) 90%, transparent);
+    transform: translateX(-50%);
+  }
+
+  .card {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 6px;
-    transition: background 0.2s;
+    gap: 40px;
   }
 
-  .legend-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  .card:nth-child(odd) { flex-direction: row; }
+  .card:nth-child(even) { flex-direction: row-reverse; }
 
-  .legend-dot {
-    width: 10px; height: 10px;
+  .card-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    flex-shrink: 0;
+    background: #f0c060;
+    box-shadow: 0 0 12px rgba(240,192,96,0.6), 0 0 30px rgba(240,192,96,0.2);
+    z-index: 2;
   }
 
-  .legend-label {
+  .card-content {
+    flex: 1;
+    max-width: calc(50% - 48px);
+  }
+
+  .card:nth-child(odd) .card-content { text-align: right; }
+  .card:nth-child(even) .card-content { text-align: left; }
+
+  .card-spacer {
+    flex: 1;
+    max-width: calc(50% - 48px);
+  }
+
+  .card-era {
+    font-family: 'Cinzel', serif;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.75);
-  }
-
-  .legend-label small {
-    display: block;
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.35);
-    margin-top: 1px;
-  }
-
-  .info-panel {
-    position: fixed;
-    bottom: 90px;
-    left: 24px;
-    z-index: 20;
-    background: rgba(10, 10, 30, 0.65);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 16px 20px;
-    max-width: 280px;
-    pointer-events: auto;
-  }
-
-  .info-panel h3 {
-    font-size: 11px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    color: #f0c060;
+    letter-spacing: 3px;
     margin-bottom: 8px;
   }
 
-  .info-panel p {
-    font-size: 12px;
-    line-height: 1.7;
-    color: rgba(255, 255, 255, 0.55);
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    color: #f0e6d3;
+    margin-bottom: 4px;
+    letter-spacing: 2px;
   }
 
-  .info-panel .highlight {
-    color: #f0c060;
+  .card-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 14px;
   }
 
-  .divider {
-    width: 1px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .speed-display {
-    font-size: 11px;
+  .card-desc {
+    font-size: 13px;
+    line-height: 1.8;
     color: rgba(255,255,255,0.5);
-    min-width: 30px;
+    margin-bottom: 20px;
+  }
+
+  .card-link {
+    display: inline-block;
+    padding: 10px 28px;
+    background: rgba(240,192,96,0.08);
+    border: 1px solid rgba(240,192,96,0.25);
+    border-radius: 10px;
+    color: #f0c060;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    transition: all 0.4s ease;
+  }
+
+  .card-link:hover {
+    background: rgba(240,192,96,0.18);
+    border-color: rgba(240,192,96,0.5);
+    box-shadow: 0 0 20px rgba(240,192,96,0.15);
+    transform: translateY(-2px);
+  }
+
+  footer {
     text-align: center;
+    margin-top: 80px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  footer p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .timeline::before { left: 20px; }
+    .card, .card:nth-child(even) { flex-direction: column; align-items: flex-start; padding-left: 48px; }
+    .card-dot { left: 20px; top: 24px; transform: translate(-50%, 0); }
+    .card-content, .card-spacer { max-width: 100%; text-align: left !important; }
+    .card-spacer { display: none; }
   }
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
+<canvas id="bg"></canvas>
 
-<div class="title-bar">
-  <h1>PTOLEMAIC SYSTEM</h1>
-  <div class="subtitle">프톨레마이오스 천동설 — AD 150</div>
-</div>
+<div class="container">
+  <header>
+    <h1>HISTORY OF THE COSMOS</h1>
+    <div class="subtitle">천문학 모델의 역사 — 고대 그리스에서 코페르니쿠스까지</div>
+  </header>
 
-<div class="legend" id="legend"></div>
+  <div class="timeline">
 
-<div class="info-panel">
-  <h3>모델 설명</h3>
-  <p>
-    지구가 우주의 중심에 고정되어 있고, 모든 천체가 지구 주위를
-    <span class="highlight">이심원(Deferent)</span>과
-    <span class="highlight">주전원(Epicycle)</span>을 따라 공전한다.
-    <span class="highlight">이퀀트(Equant)</span> 점을 기준으로
-    각속도가 균일하게 유지되며, 이를 통해
-    <span class="highlight">역행운동(Retrograde)</span>을 설명한다.
-  </p>
-</div>
+    <div class="card">
+      <div class="card-content">
+        <div class="card-era">BC 350</div>
+        <div class="card-title">ARISTOTELIAN COSMOS</div>
+        <div class="card-subtitle">아리스토텔레스 천동설 — 동심 천구 모델</div>
+        <div class="card-desc">
+          지구를 우주의 중심에 놓고, 모든 천체가 완벽한 동심원의 수정 천구 위에서 균일한 원운동을 한다.
+          가장 단순하고 우아하지만, 역행운동을 설명할 수 없다는 치명적 한계를 가진다.
+        </div>
+        <a class="card-link" href="aristotle_model.html">애니메이션 보기 &rarr;</a>
+      </div>
+      <div class="card-dot"></div>
+      <div class="card-spacer"></div>
+    </div>
 
-<div class="controls">
-  <label>속도</label>
-  <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1">
-  <span class="speed-display" id="speedDisplay">1.0x</span>
-  <div class="divider"></div>
-  <button class="btn active" id="btnOrbits" onclick="toggleOrbits()">궤도</button>
-  <button class="btn active" id="btnTrails" onclick="toggleTrails()">궤적</button>
-  <button class="btn" id="btnEpicycles" onclick="toggleEpicycles()">주전원</button>
-  <button class="btn" id="btnEquant" onclick="toggleEquant()">이퀀트</button>
-  <button class="btn" id="btnLabels" onclick="toggleLabels()">라벨</button>
-  <div class="divider"></div>
-  <button class="btn" id="btnPause" onclick="togglePause()">⏸</button>
+    <div class="card">
+      <div class="card-spacer"></div>
+      <div class="card-dot"></div>
+      <div class="card-content">
+        <div class="card-era">AD 150</div>
+        <div class="card-title">PTOLEMAIC SYSTEM</div>
+        <div class="card-subtitle">프톨레마이오스 천동설 — 주전원·이심원 모델</div>
+        <div class="card-desc">
+          이심원(Deferent) 위에 주전원(Epicycle)을 추가하고, 이퀀트(Equant)를 도입하여
+          역행운동을 수학적으로 정밀하게 설명했다. 1400년간 서양 천문학의 표준 모델이었다.
+        </div>
+        <a class="card-link" href="ptolemaic_model.html">애니메이션 보기 &rarr;</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+        <div class="card-era">AD 1543</div>
+        <div class="card-title">COPERNICAN SYSTEM</div>
+        <div class="card-subtitle">코페르니쿠스 지동설 — 태양중심 모델</div>
+        <div class="card-desc">
+          태양을 우주의 중심에 놓고, 지구를 포함한 행성들이 태양 주위를 공전한다.
+          역행운동이 궤도 속도 차이에 의한 상대운동으로 자연스럽게 설명된다.
+          여전히 원궤도를 사용했다는 한계가 남아 있다.
+        </div>
+        <a class="card-link" href="copernican_model.html">애니메이션 보기 &rarr;</a>
+      </div>
+      <div class="card-dot"></div>
+      <div class="card-spacer"></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>Interactive Astronomical Models &middot; Built with HTML5 Canvas</p>
+  </footer>
 </div>
 
 <script>
-// ============================================================
-// Canvas setup
-// ============================================================
-const canvas = document.getElementById('canvas');
+const canvas = document.getElementById('bg');
 const ctx = canvas.getContext('2d');
-let W, H, cx, cy;
-
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  cx = W / 2;
-  cy = H / 2;
-}
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 resize();
 window.addEventListener('resize', resize);
 
-// ============================================================
-// State
-// ============================================================
-let showOrbits = true;
-let showTrails = true;
-let showEpicycles = true;
-let showEquant = false;
-let showLabels = true;
-let paused = false;
-let speedMul = 1;
-let time = 0;
-
-const speedSlider = document.getElementById('speedSlider');
-const speedDisplay = document.getElementById('speedDisplay');
-speedSlider.addEventListener('input', () => {
-  speedMul = parseFloat(speedSlider.value);
-  speedDisplay.textContent = speedMul.toFixed(1) + 'x';
-});
-
-function setBtn(id, active) {
-  document.getElementById(id).classList.toggle('active', active);
-}
-function toggleOrbits()   { showOrbits = !showOrbits;       setBtn('btnOrbits', showOrbits); }
-function toggleTrails()   { showTrails = !showTrails;       setBtn('btnTrails', showTrails); }
-function toggleEpicycles(){ showEpicycles = !showEpicycles; setBtn('btnEpicycles', showEpicycles); }
-function toggleEquant()   { showEquant = !showEquant;       setBtn('btnEquant', showEquant); }
-function toggleLabels()   { showLabels = !showLabels;       setBtn('btnLabels', showLabels); }
-function togglePause()    {
-  paused = !paused;
-  document.getElementById('btnPause').textContent = paused ? '▶' : '⏸';
-}
-
-// ============================================================
-// Stars background
-// ============================================================
 const stars = [];
-for (let i = 0; i < 600; i++) {
+for (let i = 0; i < 400; i++) {
   stars.push({
-    x: Math.random(),
-    y: Math.random(),
-    r: Math.random() * 1.4 + 0.2,
-    brightness: Math.random(),
-    twinkleSpeed: Math.random() * 2 + 1,
-    twinklePhase: Math.random() * Math.PI * 2,
+    x: Math.random(), y: Math.random(),
+    r: Math.random() * 1.2 + 0.2,
+    b: Math.random(),
+    sp: Math.random() * 2 + 0.5,
+    ph: Math.random() * Math.PI * 2,
   });
 }
 
-function drawStars(t) {
-  for (const s of stars) {
-    const flicker = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
-    const alpha = 0.15 + 0.6 * s.brightness * flicker;
-    ctx.beginPath();
-    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(220, 230, 255, ${alpha})`;
-    ctx.fill();
-  }
-}
-
-// ============================================================
-// Celestial bodies — Ptolemaic parameters
-// ============================================================
-const baseScale = Math.min(W, H) / 2.2;
-
-function getScale() {
-  return Math.min(W, H) / 2.2;
-}
-
-const bodies = [
-  {
-    name: '달',
-    nameEn: 'Luna',
-    color: '#c8c8d0',
-    glow: 'rgba(200,200,210,0.4)',
-    deferentR: 0.10,
-    epicycleR: 0.018,
-    deferentSpeed: 4.2,
-    epicycleSpeed: -14,
-    eccentricity: 0.012,
-    eccentricityAngle: 0,
-    size: 4,
-    trailLen: 300,
-    trail: [],
-    hueBase: 220,
-    hueRange: 60,
-  },
-  {
-    name: '수성',
-    nameEn: 'Mercury',
-    color: '#b0a090',
-    glow: 'rgba(176,160,144,0.35)',
-    deferentR: 0.19,
-    epicycleR: 0.065,
-    deferentSpeed: 3.1,
-    epicycleSpeed: -12.5,
-    eccentricity: 0.025,
-    eccentricityAngle: 0.5,
-    size: 4,
-    trailLen: 500,
-    trail: [],
-    hueBase: 30,
-    hueRange: 80,
-  },
-  {
-    name: '금성',
-    nameEn: 'Venus',
-    color: '#f0d8a0',
-    glow: 'rgba(240,216,160,0.4)',
-    deferentR: 0.28,
-    epicycleR: 0.09,
-    deferentSpeed: 2.3,
-    epicycleSpeed: -9.5,
-    eccentricity: 0.018,
-    eccentricityAngle: 1.2,
-    size: 5.5,
-    trailLen: 550,
-    trail: [],
-    hueBase: 40,
-    hueRange: 70,
-  },
-  {
-    name: '태양',
-    nameEn: 'Sol',
-    color: '#ffd040',
-    glow: 'rgba(255,200,50,0.6)',
-    deferentR: 0.37,
-    epicycleR: 0.0,
-    deferentSpeed: 1.0,
-    epicycleSpeed: 0,
-    eccentricity: 0.035,
-    eccentricityAngle: 1.8,
-    size: 10,
-    trailLen: 0,
-    trail: [],
-    hueBase: 45,
-    hueRange: 30,
-    isSun: true,
-  },
-  {
-    name: '화성',
-    nameEn: 'Mars',
-    color: '#e06040',
-    glow: 'rgba(224,96,64,0.4)',
-    deferentR: 0.50,
-    epicycleR: 0.12,
-    deferentSpeed: 0.53,
-    epicycleSpeed: -3.8,
-    eccentricity: 0.05,
-    eccentricityAngle: 2.5,
-    size: 5,
-    trailLen: 800,
-    trail: [],
-    hueBase: 0,
-    hueRange: 90,
-  },
-  {
-    name: '목성',
-    nameEn: 'Jupiter',
-    color: '#d0b888',
-    glow: 'rgba(208,184,136,0.35)',
-    deferentR: 0.66,
-    epicycleR: 0.09,
-    deferentSpeed: 0.084,
-    epicycleSpeed: -1.8,
-    eccentricity: 0.04,
-    eccentricityAngle: 3.0,
-    size: 7.5,
-    trailLen: 900,
-    trail: [],
-    hueBase: 30,
-    hueRange: 60,
-  },
-  {
-    name: '토성',
-    nameEn: 'Saturn',
-    color: '#c8a860',
-    glow: 'rgba(200,168,96,0.3)',
-    deferentR: 0.82,
-    epicycleR: 0.07,
-    deferentSpeed: 0.034,
-    epicycleSpeed: -1.1,
-    eccentricity: 0.05,
-    eccentricityAngle: 3.8,
-    size: 7,
-    trailLen: 1000,
-    trail: [],
-    hueBase: 40,
-    hueRange: 50,
-    hasRing: true,
-  },
-];
-
-// Build legend
-const legendEl = document.getElementById('legend');
-legendEl.innerHTML = '<h3>천체</h3>';
-bodies.forEach((b, i) => {
-  const item = document.createElement('div');
-  item.className = 'legend-item';
-  item.innerHTML = `
-    <div class="legend-dot" style="background:${b.color};box-shadow:0 0 6px ${b.glow}"></div>
-    <div class="legend-label">${b.name}<small>${b.nameEn}</small></div>
-  `;
-  legendEl.appendChild(item);
-});
-
-// ============================================================
-// Compute planet position
-// ============================================================
-function getPlanetPos(body, t, scale) {
-  const ecc = body.eccentricity * scale;
-  const eccA = body.eccentricityAngle;
-
-  // Equant offset (opposite side of Earth from center of deferent)
-  const equantX = cx + ecc * Math.cos(eccA);
-  const equantY = cy + ecc * Math.sin(eccA);
-
-  // Deferent center offset from Earth (eccentricity)
-  const defCX = cx - ecc * Math.cos(eccA);
-  const defCY = cy - ecc * Math.sin(eccA);
-
-  // Angle on deferent (uniform angular velocity around equant)
-  const defAngle = t * body.deferentSpeed;
-  const dR = body.deferentR * scale;
-  const defX = defCX + dR * Math.cos(defAngle);
-  const defY = defCY + dR * Math.sin(defAngle);
-
-  // Epicycle
-  const epiAngle = t * body.epicycleSpeed;
-  const eR = body.epicycleR * scale;
-  const px = defX + eR * Math.cos(epiAngle);
-  const py = defY + eR * Math.sin(epiAngle);
-
-  return { px, py, defX, defY, defCX, defCY, equantX, equantY, dR, eR, defAngle, epiAngle };
-}
-
-// ============================================================
-// Drawing helpers
-// ============================================================
-function drawDashedCircle(cx, cy, r, color, alpha, dashLen) {
-  ctx.beginPath();
-  ctx.setLineDash(dashLen || [4, 6]);
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = color;
-  ctx.globalAlpha = alpha;
-  ctx.lineWidth = 0.8;
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = 1;
-}
-
-function drawGlowCircle(x, y, r, color, glowColor, glowR) {
-  // Outer glow
-  const grad = ctx.createRadialGradient(x, y, 0, x, y, glowR || r * 4);
-  grad.addColorStop(0, glowColor);
-  grad.addColorStop(1, 'transparent');
-  ctx.beginPath();
-  ctx.arc(x, y, glowR || r * 4, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // Body
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function drawTrail(trail, body) {
-  if (trail.length < 3) return;
-  const len = trail.length;
-  const hueBase = body.hueBase || 0;
-  const hueRange = body.hueRange || 60;
-
-  // Detect retrograde: angular velocity around Earth reverses
-  // Compute angular position relative to Earth center for each point
-  for (let i = 1; i < len; i++) {
-    const p0 = trail[i - 1];
-    const p1 = trail[i];
-    const a0 = Math.atan2(p0.y - cy, p0.x - cx);
-    const a1 = Math.atan2(p1.y - cy, p1.x - cx);
-    let da = a1 - a0;
-    // Normalize to [-PI, PI]
-    if (da > Math.PI) da -= Math.PI * 2;
-    if (da < -Math.PI) da += Math.PI * 2;
-    // Retrograde = angular velocity reversed (negative for CCW-moving planets)
-    // Most planets move CCW (positive da), retrograde = negative da
-    trail[i].retro = da < -0.0001;
-  }
-  if (trail[0]) trail[0].retro = false;
-
-  // Draw glow layer for retrograde segments (underneath)
-  for (let i = 1; i < len; i++) {
-    if (!trail[i].retro) continue;
-    const t = i / len;
-    const alpha = t * 0.35;
-    ctx.beginPath();
-    ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
-    ctx.lineTo(trail[i].x, trail[i].y);
-    const hue = (hueBase + 180 + t * 60) % 360; // contrasting hue for retrograde glow
-    ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-  }
-
-  // Main trail with HSL gradient
-  for (let i = 1; i < len; i++) {
-    const t = i / len;
-    const p0 = trail[i - 1];
-    const p1 = trail[i];
-    const isRetro = trail[i].retro;
-
-    let hue, sat, light, alpha, width;
-    if (isRetro) {
-      // Retrograde: vivid contrasting colors, brighter, thicker
-      hue = (hueBase + 180 + t * 80) % 360;
-      sat = 100;
-      light = 65 + 10 * Math.sin(t * 20);
-      alpha = 0.25 + t * 0.7;
-      width = 2.0 + t * 2.5;
-    } else {
-      // Normal: smooth hue shift along body's color range
-      hue = (hueBase + t * hueRange) % 360;
-      sat = 70 + 20 * Math.sin(t * Math.PI);
-      light = 50 + 15 * t;
-      alpha = t * 0.6;
-      width = 0.8 + t * 1.4;
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(p0.x, p0.y);
-    ctx.lineTo(p1.x, p1.y);
-    ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
-    ctx.lineWidth = width;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-  }
-
-  // Bright dots at retrograde loop peaks
-  for (let i = 2; i < len - 1; i++) {
-    // Detect retrograde entry/exit (transition points)
-    if (trail[i].retro !== trail[i - 1].retro) {
-      const t = i / len;
-      const alpha = 0.3 + t * 0.6;
-      const hue = (hueBase + 180 + t * 60) % 360;
-      const r = 2 + t * 2;
-      // Glow dot
-      const grd = ctx.createRadialGradient(trail[i].x, trail[i].y, 0, trail[i].x, trail[i].y, r * 3);
-      grd.addColorStop(0, `hsla(${hue}, 100%, 80%, ${alpha})`);
-      grd.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(trail[i].x, trail[i].y, r * 3, 0, Math.PI * 2);
-      ctx.fillStyle = grd;
-      ctx.fill();
-      // Core dot
-      ctx.beginPath();
-      ctx.arc(trail[i].x, trail[i].y, r, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${hue}, 100%, 85%, ${alpha})`;
-      ctx.fill();
-    }
-  }
-
-  ctx.globalAlpha = 1;
-}
-
-function drawSaturnRing(x, y, size) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, size * 2.2, size * 0.7, -0.3, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(200,180,120,0.5)';
-  ctx.lineWidth = 1.8;
-  ctx.stroke();
-}
-
-function drawLabel(text, x, y, color) {
-  ctx.font = '12px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = color || 'rgba(255,255,255,0.7)';
-  ctx.textAlign = 'center';
-  ctx.fillText(text, x, y);
-}
-
-// ============================================================
-// Draw Earth
-// ============================================================
-function drawEarth() {
-  // Multi-layer glow
-  const grad3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 50);
-  grad3.addColorStop(0, 'rgba(80, 150, 255, 0.15)');
-  grad3.addColorStop(1, 'transparent');
-  ctx.beginPath();
-  ctx.arc(cx, cy, 50, 0, Math.PI * 2);
-  ctx.fillStyle = grad3;
-  ctx.fill();
-
-  const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 25);
-  grad2.addColorStop(0, 'rgba(80, 150, 255, 0.25)');
-  grad2.addColorStop(1, 'transparent');
-  ctx.beginPath();
-  ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-  ctx.fillStyle = grad2;
-  ctx.fill();
-
-  // Earth body
-  const grad = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, 12);
-  grad.addColorStop(0, '#6eb5ff');
-  grad.addColorStop(0.5, '#3a80d0');
-  grad.addColorStop(1, '#1a4080');
-  ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // Specular
-  ctx.beginPath();
-  ctx.arc(cx - 3, cy - 4, 4, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fill();
-
-  if (showLabels) {
-    drawLabel('지구', cx, cy + 24, 'rgba(110,181,255,0.8)');
-    drawLabel('Terra', cx, cy + 37, 'rgba(110,181,255,0.4)');
-  }
-}
-
-// ============================================================
-// Draw Sun with corona effect
-// ============================================================
-function drawSun(x, y, t) {
-  // Corona rays
-  const rayCount = 12;
-  for (let i = 0; i < rayCount; i++) {
-    const angle = (i / rayCount) * Math.PI * 2 + t * 0.3;
-    const len = 18 + 6 * Math.sin(t * 3 + i * 1.5);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
-    ctx.strokeStyle = 'rgba(255, 200, 50, 0.12)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
-
-  // Multi glow
-  for (let r = 40; r >= 15; r -= 8) {
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, `rgba(255, 200, 50, ${0.08 + (40 - r) * 0.01})`);
-    g.addColorStop(1, 'transparent');
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-  }
-
-  // Sun body gradient
-  const sg = ctx.createRadialGradient(x - 2, y - 2, 0, x, y, 10);
-  sg.addColorStop(0, '#fff8e0');
-  sg.addColorStop(0.3, '#ffd040');
-  sg.addColorStop(0.7, '#f0a020');
-  sg.addColorStop(1, '#c07010');
-  ctx.beginPath();
-  ctx.arc(x, y, 10, 0, Math.PI * 2);
-  ctx.fillStyle = sg;
-  ctx.fill();
-}
-
-// ============================================================
-// Main draw
-// ============================================================
-function draw(timestamp) {
-  const dt = 0.004 * speedMul;
-  if (!paused) time += dt;
-
-  const scale = getScale();
-
-  // Clear
+function draw(t) {
+  t *= 0.001;
   ctx.clearRect(0, 0, W, H);
-
-  // Deep space background
-  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
-  bgGrad.addColorStop(0, '#0a0a1a');
-  bgGrad.addColorStop(0.5, '#050510');
-  bgGrad.addColorStop(1, '#000005');
-  ctx.fillStyle = bgGrad;
+  const bg = ctx.createRadialGradient(W/2, H*0.3, 0, W/2, H*0.3, Math.max(W,H)*0.8);
+  bg.addColorStop(0, '#0a0a1e');
+  bg.addColorStop(1, '#030308');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Stars
-  drawStars(time);
-
-  // Subtle grid rings from Earth (celestial sphere feel)
-  if (showOrbits) {
-    for (const body of bodies) {
-      const ecc = body.eccentricity * scale;
-      const eccA = body.eccentricityAngle;
-      const defCX = cx - ecc * Math.cos(eccA);
-      const defCY = cy - ecc * Math.sin(eccA);
-      const dR = body.deferentR * scale;
-      drawDashedCircle(defCX, defCY, dR, body.color, 0.12, [3, 8]);
-    }
-  }
-
-  // Draw each body
-  for (const body of bodies) {
-    const pos = getPlanetPos(body, time, scale);
-
-    // Equant point
-    if (showEquant && !body.isSun) {
-      ctx.beginPath();
-      ctx.arc(pos.equantX, pos.equantY, 3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 160, 50, 0.7)';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(pos.equantX, pos.equantY, 6, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 160, 50, 0.25)';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-
-      // Deferent center
-      ctx.beginPath();
-      ctx.arc(pos.defCX, pos.defCY, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fill();
-
-      // Line from equant to deferent point
-      ctx.beginPath();
-      ctx.setLineDash([2, 4]);
-      ctx.moveTo(pos.equantX, pos.equantY);
-      ctx.lineTo(pos.defX, pos.defY);
-      ctx.strokeStyle = 'rgba(255, 160, 50, 0.15)';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Epicycle circle
-    if (showEpicycles && body.epicycleR > 0) {
-      ctx.beginPath();
-      ctx.arc(pos.defX, pos.defY, pos.eR, 0, Math.PI * 2);
-      ctx.strokeStyle = body.color;
-      ctx.globalAlpha = 0.18;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      // Deferent point (center of epicycle)
-      ctx.beginPath();
-      ctx.arc(pos.defX, pos.defY, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = body.color;
-      ctx.globalAlpha = 0.25;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // Line from epicycle center to planet
-      ctx.beginPath();
-      ctx.moveTo(pos.defX, pos.defY);
-      ctx.lineTo(pos.px, pos.py);
-      ctx.strokeStyle = body.color;
-      ctx.globalAlpha = 0.12;
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
-    // Trail
-    if (!paused) {
-      body.trail.push({ x: pos.px, y: pos.py });
-      if (body.trail.length > body.trailLen) body.trail.shift();
-    }
-    if (showTrails && body.trailLen > 0) {
-      drawTrail(body.trail, body);
-    }
-
-    // Planet
-    if (body.isSun) {
-      drawSun(pos.px, pos.py, time);
-    } else {
-      drawGlowCircle(pos.px, pos.py, body.size, body.color, body.glow, body.size * 3.5);
-      // Specular highlight
-      ctx.beginPath();
-      ctx.arc(pos.px - body.size * 0.25, pos.py - body.size * 0.3, body.size * 0.35, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.fill();
-    }
-
-    // Saturn ring
-    if (body.hasRing) {
-      drawSaturnRing(pos.px, pos.py, body.size);
-    }
-
-    // Label
-    if (showLabels) {
-      drawLabel(body.name, pos.px, pos.py + body.size + 14, body.color);
-    }
-  }
-
-  // Draw Earth on top
-  drawEarth();
-
-  // Equant label
-  if (showEquant) {
-    const marsPos = getPlanetPos(bodies[4], time, scale);
-    drawLabel('이퀀트', marsPos.equantX, marsPos.equantY + 12, 'rgba(255,160,50,0.6)');
-    drawLabel('이심점', marsPos.defCX, marsPos.defCY + 12, 'rgba(255,255,255,0.35)');
-  }
-
-  // Outer celestial sphere decoration
-  const sphereR = 0.92 * scale;
-  ctx.beginPath();
-  ctx.arc(cx, cy, sphereR, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Zodiac markers on outer sphere
-  const zodiacNames = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
-    const zx = cx + (sphereR + 14) * Math.cos(a);
-    const zy = cy + (sphereR + 14) * Math.sin(a);
-    ctx.font = '14px serif';
-    ctx.fillStyle = 'rgba(255,220,150,0.12)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(zodiacNames[i], zx, zy);
-
-    // Small tick
-    const tx1 = cx + sphereR * Math.cos(a);
-    const ty1 = cy + sphereR * Math.sin(a);
-    const tx2 = cx + (sphereR + 5) * Math.cos(a);
-    const ty2 = cy + (sphereR + 5) * Math.sin(a);
+  for (const s of stars) {
+    const f = 0.4 + 0.6 * Math.sin(t * s.sp + s.ph);
     ctx.beginPath();
-    ctx.moveTo(tx1, ty1);
-    ctx.lineTo(tx2, ty2);
-    ctx.strokeStyle = 'rgba(255,220,150,0.08)';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,210,255,${0.1 + 0.5 * s.b * f})`;
+    ctx.fill();
   }
-
   requestAnimationFrame(draw);
 }
-
 requestAnimationFrame(draw);
 </script>
 </body>
