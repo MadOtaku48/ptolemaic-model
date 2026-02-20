@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>케플러의 행성 운동 법칙 — Kepler's Laws of Planetary Motion (1609-1619 AD)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #fff;
+    user-select: none;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .title-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .title-bar h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #f0e6d3;
+    text-shadow: 0 0 20px rgba(255, 200, 100, 0.5), 0 0 60px rgba(255, 150, 50, 0.2);
+    margin-bottom: 4px;
+  }
+
+  .title-bar .subtitle {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(240, 230, 211, 0.6);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .controls label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+  }
+
+  .controls input[type="range"] {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #f0c060;
+    box-shadow: 0 0 8px rgba(240, 192, 96, 0.6);
+    cursor: pointer;
+  }
+
+  .btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Noto Sans KR', sans-serif;
+    pointer-events: auto;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .btn.active {
+    background: rgba(240, 192, 96, 0.15);
+    border-color: rgba(240, 192, 96, 0.4);
+    color: #f0c060;
+  }
+
+  .btn.law-btn {
+    border-color: rgba(100, 180, 255, 0.3);
+  }
+
+  .btn.law-btn.active {
+    background: rgba(100, 180, 255, 0.15);
+    border-color: rgba(100, 180, 255, 0.5);
+    color: #7cb8ff;
+  }
+
+  .legend {
+    position: fixed;
+    top: 100px;
+    right: 24px;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 180px;
+  }
+
+  .legend h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+
+  .legend-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .legend-item.selected {
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 2px solid rgba(124, 184, 255, 0.6);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .legend-label small {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 1px;
+  }
+
+  .info-panel {
+    position: fixed;
+    bottom: 90px;
+    left: 24px;
+    z-index: 20;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 340px;
+    pointer-events: auto;
+    transition: opacity 0.3s;
+  }
+
+  .info-panel h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-panel p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .info-panel .highlight {
+    color: #f0c060;
+  }
+
+  .info-panel .law-highlight {
+    color: #7cb8ff;
+    font-weight: 700;
+  }
+
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .speed-display {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    min-width: 30px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="title-bar">
+  <h1>KEPLERIAN SYSTEM</h1>
+  <div class="subtitle">케플러의 행성 운동 법칙 — AD 1609</div>
+</div>
+
+<div class="legend" id="legend">
+  <h3>행성 목록</h3>
+</div>
+
+<div class="info-panel" id="infoPanel">
+  <h3>모델 설명</h3>
+  <p id="infoText">
+    케플러는 <span class="highlight">티코 브라헤</span>의 정밀한 관측 데이터를 분석하여
+    행성이 원이 아닌 <span class="highlight">타원 궤도</span>를 따른다는 것을 발견했다.
+    세 가지 법칙으로 행성 운동을 완벽하게 기술했으며,
+    이는 후에 <span class="highlight">뉴턴의 만유인력 법칙</span>의 기초가 되었다.
+  </p>
+</div>
+
+<div class="controls">
+  <label>속도</label>
+  <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1">
+  <span class="speed-display" id="speedDisplay">1.0x</span>
+  <div class="divider"></div>
+  <button class="btn active" id="btnOrbits" onclick="toggleOrbits()">궤도</button>
+  <button class="btn active" id="btnTrails" onclick="toggleTrails()">궤적</button>
+  <div class="divider"></div>
+  <button class="btn law-btn" id="btnLaw1" onclick="toggleLaw(1)">제1법칙</button>
+  <button class="btn law-btn" id="btnLaw2" onclick="toggleLaw(2)">제2법칙</button>
+  <button class="btn law-btn" id="btnLaw3" onclick="toggleLaw(3)">제3법칙</button>
+  <div class="divider"></div>
+  <button class="btn active" id="btnLabels" onclick="toggleLabels()">라벨</button>
+  <button class="btn" id="btnPause" onclick="togglePause()">⏸</button>
+</div>
+
+<script>
+// ============================================================
+// Canvas setup
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy, scale;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H / 2;
+  scale = Math.min(W, H) * 0.48;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============================================================
+// State
+// ============================================================
+let showOrbits = true;
+let showTrails = true;
+let showLabels = true;
+let showLaw1 = false;
+let showLaw2 = false;
+let showLaw3 = false;
+let paused = false;
+let speedMul = 1;
+let time = 0;
+let selectedPlanetIdx = 3; // Mars by default (Kepler derived laws from Mars)
+
+const speedSlider = document.getElementById('speedSlider');
+const speedDisplay = document.getElementById('speedDisplay');
+speedSlider.addEventListener('input', () => {
+  speedMul = parseFloat(speedSlider.value);
+  speedDisplay.textContent = speedMul.toFixed(1) + 'x';
+});
+
+// ============================================================
+// Toggle functions
+// ============================================================
+function toggleOrbits() {
+  showOrbits = !showOrbits;
+  document.getElementById('btnOrbits').classList.toggle('active', showOrbits);
+}
+function toggleTrails() {
+  showTrails = !showTrails;
+  document.getElementById('btnTrails').classList.toggle('active', showTrails);
+  if (!showTrails) planets.forEach(p => p.trail = []);
+}
+function toggleLabels() {
+  showLabels = !showLabels;
+  document.getElementById('btnLabels').classList.toggle('active', showLabels);
+}
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? '\u25B6' : '\u23F8';
+}
+
+function toggleLaw(n) {
+  if (n === 1) { showLaw1 = !showLaw1; document.getElementById('btnLaw1').classList.toggle('active', showLaw1); }
+  if (n === 2) { showLaw2 = !showLaw2; document.getElementById('btnLaw2').classList.toggle('active', showLaw2); }
+  if (n === 3) { showLaw3 = !showLaw3; document.getElementById('btnLaw3').classList.toggle('active', showLaw3); }
+  updateInfoPanel();
+}
+
+function updateInfoPanel() {
+  const el = document.getElementById('infoText');
+  const h3 = document.querySelector('#infoPanel h3');
+  if (showLaw2) {
+    h3.textContent = '제2법칙 — 면적 속도 일정의 법칙 (1609)';
+    el.innerHTML = '<span class="law-highlight">제2법칙 (면적 속도 일정의 법칙)</span>: 태양과 행성을 잇는 선분이 같은 시간 동안 <span class="highlight">같은 면적</span>을 쓸고 지나간다. 근일점에서는 빠르게, 원일점에서는 느리게 움직인다.';
+  } else if (showLaw1) {
+    h3.textContent = '제1법칙 — 타원 궤도의 법칙 (1609)';
+    el.innerHTML = '<span class="law-highlight">제1법칙 (타원 궤도의 법칙)</span>: 모든 행성은 태양을 하나의 <span class="highlight">초점</span>으로 하는 타원 궤도를 따라 공전한다. 타원의 두 초점 중 하나에 태양이 위치하고, 나머지 초점은 비어 있다.';
+  } else if (showLaw3) {
+    h3.textContent = '제3법칙 — 조화의 법칙 (1619)';
+    el.innerHTML = '<span class="law-highlight">제3법칙 (조화의 법칙)</span>: 행성의 공전주기의 제곱은 궤도 장반경의 세제곱에 비례한다 (<span class="highlight">T\u00B2 \u221D a\u00B3</span>). 이 법칙은 1619년 \u300A세계의 조화\u300B에서 발표되었다.';
+  } else {
+    h3.textContent = '모델 설명';
+    el.innerHTML = '케플러는 <span class="highlight">티코 브라헤</span>의 정밀한 관측 데이터를 분석하여 행성이 원이 아닌 <span class="highlight">타원 궤도</span>를 따른다는 것을 발견했다. 세 가지 법칙으로 행성 운동을 완벽하게 기술했으며, 이는 후에 <span class="highlight">뉴턴의 만유인력 법칙</span>의 기초가 되었다.';
+  }
+}
+
+// ============================================================
+// Planet definitions
+// ============================================================
+const planetDefs = [
+  { name: '수성', nameEn: 'Mercury', a: 0.12, e: 0.21,  color: '#b0b0b0', radius: 2.5, period: 0.241,  hue: 40 },
+  { name: '금성', nameEn: 'Venus',   a: 0.20, e: 0.007, color: '#f5deb3', radius: 4,   period: 0.615,  hue: 50 },
+  { name: '지구', nameEn: 'Earth',   a: 0.30, e: 0.017, color: '#4a9eff', radius: 4.2, period: 1.0,    hue: 210 },
+  { name: '화성', nameEn: 'Mars',    a: 0.45, e: 0.093, color: '#e05030', radius: 3.5, period: 1.881,  hue: 10 },
+  { name: '목성', nameEn: 'Jupiter', a: 0.65, e: 0.049, color: '#d4a574', radius: 7,   period: 11.86,  hue: 30 },
+  { name: '토성', nameEn: 'Saturn',  a: 0.84, e: 0.057, color: '#e8d5a0', radius: 6,   period: 29.46,  hue: 45 },
+];
+
+// Moon for Earth
+const moonDef = { a: 0.018, e: 0.055, period: 0.0748, color: '#ccc', radius: 1.5 };
+
+// ============================================================
+// Kepler's equation solver (Newton's method)
+// ============================================================
+function solveKepler(M, e, tol) {
+  tol = tol || 1e-8;
+  // Normalize M to [0, 2PI)
+  M = ((M % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  let E = M;
+  for (let i = 0; i < 30; i++) {
+    const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= dE;
+    if (Math.abs(dE) < tol) break;
+  }
+  return E;
+}
+
+// Get position on ellipse given mean anomaly
+// Sun is at the origin (focus 1). Ellipse center is at (-c, 0).
+// Perihelion is at (a - c, 0) = (a(1-e), 0) — closest to origin
+// Aphelion is at  (-(a + c), 0) = (-a(1+e), 0) — farthest from origin
+function getEllipsePos(a, e, M) {
+  const E = solveKepler(M, e);
+  const cosE = Math.cos(E);
+  const sinE = Math.sin(E);
+  // Position relative to Sun at origin
+  const b = a * Math.sqrt(1 - e * e);
+  const c = a * e;
+  const x = a * cosE - c;  // when E=0 => x = a - c (perihelion)
+  const y = b * sinE;
+  return { x, y, E };
+}
+
+// True anomaly from eccentric anomaly
+function trueAnomalyFromE(E, e) {
+  return 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+}
+
+// ============================================================
+// Planet state
+// ============================================================
+const planets = planetDefs.map((def, i) => ({
+  ...def,
+  meanAnomaly: Math.random() * Math.PI * 2,
+  trail: [],
+  idx: i,
+  orbX: 0,
+  orbY: 0,
+  screenX: 0,
+  screenY: 0,
+}));
+
+let moonMeanAnomaly = Math.random() * Math.PI * 2;
+
+// ============================================================
+// Stars
+// ============================================================
+const stars = [];
+for (let i = 0; i < 500; i++) {
+  stars.push({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.5 + 0.3,
+    twinkleSpeed: Math.random() * 2 + 0.5,
+    twinkleOffset: Math.random() * Math.PI * 2,
+    brightness: Math.random() * 0.5 + 0.5,
+    hue: Math.random() < 0.1 ? (Math.random() < 0.5 ? 220 : 30) : 0,
+    sat: Math.random() < 0.1 ? 40 : 0,
+  });
+}
+
+// ============================================================
+// Legend
+// ============================================================
+function buildLegend() {
+  const legend = document.getElementById('legend');
+  let html = '<h3>행성 목록</h3>';
+  planets.forEach((p, i) => {
+    const sel = i === selectedPlanetIdx ? ' selected' : '';
+    html += '<div class="legend-item' + sel + '" onclick="selectPlanet(' + i + ')" id="legendItem' + i + '">' +
+      '<div class="legend-dot" style="background:' + p.color + ';box-shadow:0 0 6px ' + p.color + '"></div>' +
+      '<div class="legend-label">' + p.name + '<small>' + p.nameEn + '</small></div>' +
+    '</div>';
+    if (i === 2) {
+      html += '<div class="legend-item" style="padding-left:26px;pointer-events:none;">' +
+        '<div class="legend-dot" style="background:#ccc;width:7px;height:7px"></div>' +
+        '<div class="legend-label" style="font-size:11px;">달<small>Moon</small></div>' +
+      '</div>';
+    }
+  });
+  legend.innerHTML = html;
+}
+buildLegend();
+
+function selectPlanet(idx) {
+  selectedPlanetIdx = idx;
+  buildLegend();
+}
+
+// ============================================================
+// Convert orbital coords to screen
+// Sun is at screen center (cx, cy) which is the focus
+// ============================================================
+function toScreen(ox, oy) {
+  return { x: cx + ox * scale, y: cy - oy * scale }; // flip Y for screen coords
+}
+
+// ============================================================
+// Draw functions
+// ============================================================
+function drawStars(t) {
+  for (let i = 0; i < stars.length; i++) {
+    const s = stars[i];
+    const alpha = s.brightness * (0.6 + 0.4 * Math.sin(t * s.twinkleSpeed + s.twinkleOffset));
+    if (s.sat > 0) {
+      ctx.fillStyle = 'hsla(' + s.hue + ',' + s.sat + '%,80%,' + alpha + ')';
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    }
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawSun(t) {
+  const sx = cx, sy = cy;
+
+  // Animated corona rays
+  ctx.save();
+  const rayCount = 12;
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (i / rayCount) * Math.PI * 2 + t * 0.3;
+    const len = 50 + 15 * Math.sin(t * 2 + i * 1.3);
+    const grad = ctx.createLinearGradient(sx, sy,
+      sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+    grad.addColorStop(0, 'rgba(255, 200, 80, 0.12)');
+    grad.addColorStop(1, 'rgba(255, 200, 80, 0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(angle) * 18, sy + Math.sin(angle) * 18);
+    ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Corona layers
+  const coronaGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, 70);
+  coronaGrad.addColorStop(0, 'rgba(255, 240, 180, 0.8)');
+  coronaGrad.addColorStop(0.12, 'rgba(255, 200, 80, 0.5)');
+  coronaGrad.addColorStop(0.35, 'rgba(255, 160, 40, 0.12)');
+  coronaGrad.addColorStop(0.6, 'rgba(255, 120, 20, 0.04)');
+  coronaGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+  ctx.fillStyle = coronaGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 70, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Outer glow (pulsing)
+  const pulseR = 120 + 10 * Math.sin(t * 1.5);
+  const outerGlow = ctx.createRadialGradient(sx, sy, 0, sx, sy, pulseR);
+  outerGlow.addColorStop(0, 'rgba(255, 200, 100, 0.1)');
+  outerGlow.addColorStop(0.5, 'rgba(255, 150, 50, 0.03)');
+  outerGlow.addColorStop(1, 'rgba(255, 100, 0, 0)');
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(sx, sy, pulseR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sun body
+  const sunGrad = ctx.createRadialGradient(sx - 3, sy - 3, 0, sx, sy, 16);
+  sunGrad.addColorStop(0, '#fffbe6');
+  sunGrad.addColorStop(0.4, '#ffdd66');
+  sunGrad.addColorStop(0.8, '#f0a020');
+  sunGrad.addColorStop(1, '#d08010');
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 16, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sun label
+  if (showLabels) {
+    ctx.font = '700 11px "Noto Sans KR"';
+    ctx.fillStyle = 'rgba(255, 220, 120, 0.9)';
+    ctx.textAlign = 'center';
+    ctx.fillText('태양', sx, sy + 30);
+    ctx.font = '10px "Cinzel"';
+    ctx.fillStyle = 'rgba(255, 220, 120, 0.5)';
+    ctx.fillText('SUN', sx, sy + 42);
+  }
+}
+
+function drawOrbitEllipse(a, e, alpha, color, highlight) {
+  const b = a * Math.sqrt(1 - e * e);
+  const c = a * e;
+  const aPx = a * scale;
+  const bPx = b * scale;
+  // Ellipse center is at (-c, 0) from Sun. On screen: (cx - c*scale, cy)
+  const ecx = cx - c * scale;
+
+  ctx.save();
+  ctx.strokeStyle = highlight ? color : 'rgba(255,255,255,' + alpha + ')';
+  ctx.lineWidth = highlight ? 2.5 : 1;
+  if (highlight) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+  }
+  ctx.beginPath();
+  ctx.ellipse(ecx, cy, aPx, bPx, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSaturnRings(sx, sy, radius) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(232, 213, 160, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(sx, sy, radius * 2.5, radius * 0.7, -0.3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(232, 213, 160, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(sx, sy, radius * 3.2, radius * 0.9, -0.3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPlanet(p, t) {
+  // Use precomputed positions from main loop
+  const sp = { x: p.screenX, y: p.screenY };
+
+  // Trail
+  if (showTrails) {
+    p.trail.push({ x: sp.x, y: sp.y });
+    const maxLen = 350;
+    if (p.trail.length > maxLen) p.trail.splice(0, p.trail.length - maxLen);
+
+    if (p.trail.length > 2) {
+      for (let i = 1; i < p.trail.length; i++) {
+        const frac = i / p.trail.length;
+        const hue = (p.hue + frac * 60) % 360;
+        ctx.strokeStyle = 'hsla(' + hue + ', 80%, 60%, ' + (frac * 0.5) + ')';
+        ctx.lineWidth = frac * 2.5;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y);
+        ctx.lineTo(p.trail[i].x, p.trail[i].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Planet glow
+  const glow = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, p.radius * 5);
+  glow.addColorStop(0, p.color + '50');
+  glow.addColorStop(1, p.color + '00');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, p.radius * 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Saturn rings (behind + in front effect approximation)
+  if (p.idx === 5) {
+    drawSaturnRings(sp.x, sp.y, p.radius);
+  }
+
+  // Planet body
+  const pGrad = ctx.createRadialGradient(sp.x - p.radius * 0.3, sp.y - p.radius * 0.3, 0, sp.x, sp.y, p.radius);
+  pGrad.addColorStop(0, lightenColor(p.color, 30));
+  pGrad.addColorStop(1, p.color);
+  ctx.fillStyle = pGrad;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, p.radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Selected highlight ring
+  if (p.idx === selectedPlanetIdx && (showLaw1 || showLaw2)) {
+    const pulse = 0.5 + 0.5 * Math.sin(t * 4);
+    ctx.strokeStyle = 'rgba(124,184,255,' + (0.4 + pulse * 0.4) + ')';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, p.radius + 5 + pulse * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Label
+  if (showLabels) {
+    ctx.font = '400 11px "Noto Sans KR"';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, sp.x, sp.y - p.radius - 10);
+  }
+}
+
+function lightenColor(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (num >> 16) + percent);
+  const g = Math.min(255, ((num >> 8) & 0xFF) + percent);
+  const b = Math.min(255, (num & 0xFF) + percent);
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+// Draw Moon orbiting Earth
+function drawMoon(earthP, t) {
+  const moonPos = getEllipsePos(moonDef.a, moonDef.e, moonMeanAnomaly);
+  const mx = earthP.orbX + moonPos.x;
+  const my = earthP.orbY + moonPos.y;
+  const msp = toScreen(mx, my);
+
+  ctx.fillStyle = moonDef.color;
+  ctx.beginPath();
+  ctx.arc(msp.x, msp.y, moonDef.radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (showLabels) {
+    ctx.font = '400 9px "Noto Sans KR"';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.textAlign = 'center';
+    ctx.fillText('달', msp.x, msp.y - 6);
+  }
+}
+
+// ============================================================
+// Law 1: Ellipse + Foci visualization
+// ============================================================
+function drawLaw1(p, t) {
+  const a = p.a;
+  const e = p.e;
+  const b = a * Math.sqrt(1 - e * e);
+  const c = a * e;
+  const aPx = a * scale;
+  const bPx = b * scale;
+  const cPx = c * scale;
+  // Ellipse center on screen
+  const ecx = cx - cPx;
+
+  // Highlighted orbit (dashed)
+  ctx.save();
+  ctx.strokeStyle = p.color;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = p.color;
+  ctx.shadowBlur = 15;
+  ctx.setLineDash([10, 5]);
+  ctx.beginPath();
+  ctx.ellipse(ecx, cy, aPx, bPx, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Semi-major axis line (horizontal through ellipse center)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(ecx - aPx, cy);
+  ctx.lineTo(ecx + aPx, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Semi-minor axis line
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(ecx, cy - bPx);
+  ctx.lineTo(ecx, cy + bPx);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Ellipse center marker
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.arc(ecx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Focus 2 (empty focus) — at (ecx + cPx, cy) but wait:
+  // Sun is at (cx, cy) which is (ecx + cPx, cy). Focus 2 is at (ecx - cPx, cy)
+  const f2x = ecx - cPx;
+  const f2y = cy;
+
+  // Pulsing empty focus
+  const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,' + (0.3 + pulse * 0.3) + ')';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(f2x, f2y, 6, 0, Math.PI * 2);
+  ctx.stroke();
+  // Cross mark
+  ctx.beginPath();
+  ctx.moveTo(f2x - 4, f2y - 4);
+  ctx.lineTo(f2x + 4, f2y + 4);
+  ctx.moveTo(f2x + 4, f2y - 4);
+  ctx.lineTo(f2x - 4, f2y + 4);
+  ctx.stroke();
+  ctx.restore();
+
+  // Line connecting the two foci
+  ctx.save();
+  ctx.strokeStyle = 'rgba(240, 192, 96, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(f2x, f2y);
+  ctx.lineTo(cx, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // "c" label on each side of center
+  ctx.font = 'italic 11px "Cinzel"';
+  ctx.fillStyle = 'rgba(240,192,96,0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('c', (ecx + cx) / 2, cy + 16);
+  ctx.fillText('c', (ecx + f2x) / 2, cy + 16);
+
+  // Labels for foci
+  ctx.font = '400 10px "Noto Sans KR"';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f0c060';
+  ctx.fillText('초점 1 (태양)', cx, cy + 56);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText('초점 2 (빈 초점)', f2x, f2y - 14);
+
+  // "a" label
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = 'italic 12px "Cinzel"';
+  ctx.fillText('a (장반경)', ecx, cy - bPx - 14);
+
+  // Perihelion point (closest to Sun) = right end of ellipse = ecx + aPx
+  const periSx = ecx + aPx;
+  const aphSx = ecx - aPx;
+
+  // Perihelion and aphelion dots
+  ctx.fillStyle = '#ff8844';
+  ctx.beginPath();
+  ctx.arc(periSx, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#4488ff';
+  ctx.beginPath();
+  ctx.arc(aphSx, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Labels
+  ctx.font = '700 10px "Noto Sans KR"';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff8844';
+  ctx.fillText('근일점', periSx, cy + 20);
+  ctx.fillStyle = '#4488ff';
+  ctx.fillText('원일점', aphSx, cy + 20);
+
+  // Eccentricity label near perihelion
+  ctx.font = '400 10px "Noto Sans KR"';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.textAlign = 'left';
+  ctx.fillText('이심률 e = ' + p.e.toFixed(3), periSx + 12, cy - 8);
+
+  // Line from Sun to planet (radius vector)
+  if (p.screenX && p.screenY) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(240, 192, 96, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(p.screenX, p.screenY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+// ============================================================
+// Law 2: Equal Areas visualization — THE VISUAL HIGHLIGHT
+// ============================================================
+function drawLaw2(p, t) {
+  const a = p.a;
+  const e = p.e;
+  const b = a * Math.sqrt(1 - e * e);
+  const c = a * e;
+
+  // Show the orbit for this planet highlighted if orbits are off
+  if (!showOrbits) {
+    drawOrbitEllipse(a, e, 0.15, p.color, false);
+  }
+
+  // Sweep same MEAN ANOMALY interval = same TIME interval = same area
+  const dM = 35 * Math.PI / 180; // 35 degrees of mean anomaly
+
+  // Perihelion sector: centered around M = 0
+  const M_peri_start = -dM / 2;
+  const M_peri_end = dM / 2;
+
+  // Aphelion sector: centered around M = PI
+  const M_aph_start = Math.PI - dM / 2;
+  const M_aph_end = Math.PI + dM / 2;
+
+  // Draw the spectacular sectors
+  drawAreaSector(a, e, M_peri_start, M_peri_end, 'rgba(255, 120, 50, 0.30)', 'rgba(255, 140, 68, 0.8)', '#ff8844', t, true);
+  drawAreaSector(a, e, M_aph_start, M_aph_end, 'rgba(68, 136, 255, 0.30)', 'rgba(80, 150, 255, 0.8)', '#4488ff', t, false);
+
+  // Animated sweep line from Sun to current planet position
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 220, 100, 0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(p.screenX, p.screenY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Perihelion / Aphelion labels + speed indicators
+  const periPos = getEllipsePos(a, e, 0);
+  const periSp = toScreen(periPos.x, periPos.y);
+  const aphPos = getEllipsePos(a, e, Math.PI);
+  const aphSp = toScreen(aphPos.x, aphPos.y);
+
+  // Speed arrows — tangent to orbit
+  // At perihelion (M=0, E=0), velocity is purely in +y direction (upward on screen)
+  drawSpeedArrow(periSp.x + 8, periSp.y, 35, -Math.PI / 2, '#ff8844', '빠름');
+  // At aphelion (M=PI, E=PI), velocity is in -y direction (downward on screen)
+  drawSpeedArrow(aphSp.x - 8, aphSp.y, 16, Math.PI / 2, '#4488ff', '느림');
+
+  // Perihelion / Aphelion labels
+  ctx.font = '700 11px "Noto Sans KR"';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff8844';
+  ctx.fillText('근일점', periSp.x, periSp.y + 22);
+  ctx.fillStyle = '#4488ff';
+  ctx.fillText('원일점', aphSp.x, aphSp.y + 22);
+}
+
+function drawAreaSector(a, e, mStart, mEnd, fillColor, strokeColor, labelColor, t, isPeri) {
+  const steps = 80;
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const m = mStart + (mEnd - mStart) * i / steps;
+    const pos = getEllipsePos(a, e, m);
+    pts.push(toScreen(pos.x, pos.y));
+  }
+
+  // Filled sector with gradient effect
+  ctx.save();
+
+  // Main fill
+  ctx.fillStyle = fillColor;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  for (const pt of pts) {
+    ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner glow from Sun
+  const midPt = pts[Math.floor(pts.length / 2)];
+  const dist = Math.sqrt((midPt.x - cx) ** 2 + (midPt.y - cy) ** 2);
+  const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, dist);
+  const baseColor = isPeri ? '255,140,60' : '80,140,255';
+  glowGrad.addColorStop(0, 'rgba(' + baseColor + ',0.15)');
+  glowGrad.addColorStop(0.5, 'rgba(' + baseColor + ',0.08)');
+  glowGrad.addColorStop(1, 'rgba(' + baseColor + ',0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  for (const pt of pts) {
+    ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Pulsing border
+  const pulse = 0.6 + 0.4 * Math.sin(t * 2.5 + (isPeri ? 0 : Math.PI));
+  ctx.strokeStyle = strokeColor.replace('0.8', String(0.4 + pulse * 0.4));
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  for (const pt of pts) {
+    ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Radial edge lines (Sun to sector endpoints)
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(pts[0].x, pts[0].y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+
+  // "Equal area" label in the center of the sector
+  const labelIdx = Math.floor(pts.length / 2);
+  const lpt = pts[labelIdx];
+  // Position label at ~60% of the way from Sun to arc midpoint
+  const lx = cx + (lpt.x - cx) * 0.55;
+  const ly = cy + (lpt.y - cy) * 0.55;
+
+  ctx.save();
+  ctx.font = '700 12px "Noto Sans KR"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = labelColor;
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 8;
+  ctx.fillText('동일 면적', lx, ly);
+  ctx.restore();
+}
+
+function drawSpeedArrow(x, y, len, angle, color, label) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Arrow shaft with gradient
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(len, 0);
+  ctx.stroke();
+
+  // Arrow head
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(len + 2, 0);
+  ctx.lineTo(len - 7, -5);
+  ctx.lineTo(len - 7, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  // Label
+  ctx.save();
+  ctx.font = '700 10px "Noto Sans KR"';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 4;
+  const lx = x + Math.cos(angle) * (len + 18);
+  const ly = y + Math.sin(angle) * (len + 18);
+  ctx.fillText(label, lx, ly);
+  ctx.restore();
+}
+
+// ============================================================
+// Law 3: T^2 vs a^3 chart
+// ============================================================
+function drawLaw3Chart(t) {
+  const chartW = 280;
+  const chartH = 240;
+  const margin = 50;
+  const chartX = W - chartW - 30;
+  const chartY = H - chartH - 100;
+
+  // Background panel
+  ctx.save();
+  ctx.fillStyle = 'rgba(10, 10, 30, 0.88)';
+  ctx.strokeStyle = 'rgba(100, 180, 255, 0.15)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, chartX, chartY, chartW, chartH, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  // Subtle border glow
+  ctx.shadowColor = 'rgba(100, 180, 255, 0.1)';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = 'rgba(100, 180, 255, 0.08)';
+  roundRect(ctx, chartX, chartY, chartW, chartH, 14);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Title
+  ctx.font = '700 13px "Noto Sans KR"';
+  ctx.fillStyle = '#7cb8ff';
+  ctx.textAlign = 'center';
+  ctx.fillText('제3법칙: T\u00B2 = k \u00B7 a\u00B3', chartX + chartW / 2, chartY + 24);
+
+  // Plot area
+  const px = chartX + margin;
+  const py = chartY + 40;
+  const pw = chartW - margin - 15;
+  const ph = chartH - 65;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(px, py + ph);
+  ctx.lineTo(px + pw, py + ph);
+  ctx.stroke();
+
+  // Small arrow at axis ends
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  // Y axis arrow
+  ctx.beginPath();
+  ctx.moveTo(px, py - 2);
+  ctx.lineTo(px - 3, py + 5);
+  ctx.lineTo(px + 3, py + 5);
+  ctx.fill();
+  // X axis arrow
+  ctx.beginPath();
+  ctx.moveTo(px + pw + 2, py + ph);
+  ctx.lineTo(px + pw - 5, py + ph - 3);
+  ctx.lineTo(px + pw - 5, py + ph + 3);
+  ctx.fill();
+
+  // Axis labels
+  ctx.font = '400 9px "Noto Sans KR"';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('궤도장반경\u00B3 (a\u00B3)', px + pw / 2, py + ph + 16);
+
+  ctx.save();
+  ctx.translate(px - 35, py + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('공전주기\u00B2 (T\u00B2)', 0, 0);
+  ctx.restore();
+
+  // Real planetary data (AU and years)
+  const realPlanets = [
+    { name: '수성', a: 0.387, T: 0.241, color: '#b0b0b0' },
+    { name: '금성', a: 0.723, T: 0.615, color: '#f5deb3' },
+    { name: '지구', a: 1.000, T: 1.000, color: '#4a9eff' },
+    { name: '화성', a: 1.524, T: 1.881, color: '#e05030' },
+    { name: '목성', a: 5.203, T: 11.86, color: '#d4a574' },
+    { name: '토성', a: 9.537, T: 29.46, color: '#e8d5a0' },
+  ];
+
+  const maxA3 = Math.pow(9.537, 3);
+  const maxT2 = Math.pow(29.46, 2);
+  const maxVal = Math.max(maxA3, maxT2) * 1.08;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for (let i = 1; i <= 4; i++) {
+    const gy = py + ph - (ph * i / 4);
+    ctx.beginPath();
+    ctx.moveTo(px, gy);
+    ctx.lineTo(px + pw, gy);
+    ctx.stroke();
+    const gx = px + (pw * i / 4);
+    ctx.beginPath();
+    ctx.moveTo(gx, py);
+    ctx.lineTo(gx, py + ph);
+    ctx.stroke();
+  }
+
+  // Ideal line T^2 = a^3 (k=1 in AU/years) — from origin to corner
+  ctx.save();
+  ctx.strokeStyle = 'rgba(124, 184, 255, 0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px, py + ph);
+  // Line goes from (0,0) to (maxVal, maxVal)
+  ctx.lineTo(px + pw, py);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Plot points with animated appearance
+  realPlanets.forEach((rp, idx) => {
+    const a3 = Math.pow(rp.a, 3);
+    const T2 = Math.pow(rp.T, 2);
+    const dx = (a3 / maxVal) * pw;
+    const dy = (T2 / maxVal) * ph;
+    const ptx = px + dx;
+    const pty = py + ph - dy;
+
+    // Glow (pulsing)
+    const pulse = 0.5 + 0.3 * Math.sin(t * 2 + idx * 0.8);
+    const g = ctx.createRadialGradient(ptx, pty, 0, ptx, pty, 12);
+    g.addColorStop(0, rp.color + Math.round(60 + pulse * 40).toString(16).padStart(2, '0'));
+    g.addColorStop(1, rp.color + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(ptx, pty, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dot
+    ctx.fillStyle = rp.color;
+    ctx.beginPath();
+    ctx.arc(ptx, pty, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Name label
+    ctx.font = '400 9px "Noto Sans KR"';
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    // Offset labels to avoid overlap
+    const offX = idx < 4 ? 7 : -5;
+    const offY = idx < 4 ? -5 : 14;
+    ctx.textAlign = idx < 4 ? 'left' : 'right';
+    ctx.fillText(rp.name, ptx + offX, pty + offY);
+  });
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ============================================================
+// Perihelion / Aphelion markers (default mode)
+// ============================================================
+function drawPeriAphelionMarkers(p) {
+  const a = p.a;
+  const e = p.e;
+  const c = a * e;
+
+  // Perihelion = (a-c, 0), Aphelion = (-(a+c), 0)
+  // On screen (Sun at cx,cy):
+  const periPos = toScreen(a - c, 0);
+  const aphPos = toScreen(-(a + c), 0);
+
+  // Small tick marks
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(periPos.x, periPos.y - 5);
+  ctx.lineTo(periPos.x, periPos.y + 5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(aphPos.x, aphPos.y - 5);
+  ctx.lineTo(aphPos.x, aphPos.y + 5);
+  ctx.stroke();
+
+  if (showLabels) {
+    ctx.font = '400 9px "Noto Sans KR"';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,140,60,0.5)';
+    ctx.fillText('근일점', periPos.x, periPos.y + 16);
+    ctx.fillStyle = 'rgba(60,130,255,0.5)';
+    ctx.fillText('원일점', aphPos.x, aphPos.y + 16);
+  }
+}
+
+// ============================================================
+// Main animation loop
+// ============================================================
+let lastTime = 0;
+
+// Initialize planet positions on first load
+planets.forEach((p) => {
+  const pos = getEllipsePos(p.a, p.e, p.meanAnomaly);
+  const sp = toScreen(pos.x, pos.y);
+  p.screenX = sp.x;
+  p.screenY = sp.y;
+  p.orbX = pos.x;
+  p.orbY = pos.y;
+});
+
+function animate(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const rawDt = (timestamp - lastTime) / 1000;
+  const dt = Math.min(rawDt, 0.05); // cap dt to prevent jumps on tab switch
+  lastTime = timestamp;
+
+  if (!paused) {
+    time += dt * speedMul * 0.15;
+  }
+
+  // Update all planet positions first
+  planets.forEach((p) => {
+    const angularSpeed = (2 * Math.PI) / p.period;
+    if (!paused) {
+      p.meanAnomaly += angularSpeed * dt * speedMul * 0.15;
+      p.meanAnomaly %= (Math.PI * 2);
+    }
+    const pos = getEllipsePos(p.a, p.e, p.meanAnomaly);
+    const sp = toScreen(pos.x, pos.y);
+    p.screenX = sp.x;
+    p.screenY = sp.y;
+    p.orbX = pos.x;
+    p.orbY = pos.y;
+  });
+
+  // Update moon
+  if (!paused) {
+    const moonAngSpeed = (2 * Math.PI) / moonDef.period;
+    moonMeanAnomaly += moonAngSpeed * dt * speedMul * 0.15;
+    moonMeanAnomaly %= (Math.PI * 2);
+  }
+
+  // Clear
+  ctx.fillStyle = 'rgb(6, 6, 20)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle nebula background
+  const neb1 = ctx.createRadialGradient(W * 0.2, H * 0.3, 0, W * 0.2, H * 0.3, W * 0.4);
+  neb1.addColorStop(0, 'rgba(40, 20, 60, 0.04)');
+  neb1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = neb1;
+  ctx.fillRect(0, 0, W, H);
+
+  const neb2 = ctx.createRadialGradient(W * 0.8, H * 0.7, 0, W * 0.8, H * 0.7, W * 0.35);
+  neb2.addColorStop(0, 'rgba(20, 30, 60, 0.04)');
+  neb2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = neb2;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  drawStars(time * 3);
+
+  // Draw orbit ellipses
+  if (showOrbits) {
+    planets.forEach((p, i) => {
+      const highlight = (showLaw1 && i === selectedPlanetIdx);
+      drawOrbitEllipse(p.a, p.e, 0.13, p.color, highlight);
+    });
+  }
+
+  // Draw perihelion/aphelion markers for selected planet (only in default mode)
+  if (showLabels && !showLaw1 && !showLaw2) {
+    drawPeriAphelionMarkers(planets[selectedPlanetIdx]);
+  }
+
+  // Law 1 visualization (behind Sun and planets)
+  if (showLaw1) {
+    drawLaw1(planets[selectedPlanetIdx], time);
+  }
+
+  // Law 2 visualization (behind planets, the visual highlight)
+  if (showLaw2) {
+    drawLaw2(planets[selectedPlanetIdx], time);
+  }
+
+  // Sun (drawn after law visualizations so it's on top)
+  drawSun(time);
+
+  // Draw planets
+  planets.forEach((p, i) => {
+    drawPlanet(p, time);
+
+    // Draw Moon for Earth
+    if (i === 2) {
+      drawMoon(p, time);
+    }
+  });
+
+  // Law 3 chart overlay (drawn on top of everything)
+  if (showLaw3) {
+    drawLaw3Chart(time);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

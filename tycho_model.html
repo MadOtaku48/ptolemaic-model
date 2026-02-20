@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>티코 브라헤 절충 모델 — Tychonic Geo-Heliocentric Model</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #fff;
+    user-select: none;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .title-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .title-bar h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #f0e6d3;
+    text-shadow: 0 0 20px rgba(255, 200, 100, 0.5), 0 0 60px rgba(255, 150, 50, 0.2);
+    margin-bottom: 4px;
+  }
+
+  .title-bar .subtitle {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(240, 230, 211, 0.6);
+    letter-spacing: 6px;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 24px;
+  }
+
+  .controls label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+  }
+
+  .controls input[type="range"] {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #f0c060;
+    box-shadow: 0 0 8px rgba(240, 192, 96, 0.6);
+    cursor: pointer;
+  }
+
+  .btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Noto Sans KR', sans-serif;
+    pointer-events: auto;
+  }
+
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .btn.active {
+    background: rgba(240, 192, 96, 0.15);
+    border-color: rgba(240, 192, 96, 0.4);
+    color: #f0c060;
+  }
+
+  .legend {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 20;
+    pointer-events: auto;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 180px;
+  }
+
+  .legend h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .legend-group-title {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(240, 192, 96, 0.55);
+    letter-spacing: 1.5px;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .legend-group-title:first-of-type {
+    margin-top: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .legend-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .legend-label small {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 1px;
+  }
+
+  .info-panel {
+    position: fixed;
+    bottom: 90px;
+    left: 24px;
+    z-index: 20;
+    background: rgba(10, 10, 30, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 320px;
+    pointer-events: auto;
+  }
+
+  .info-panel h3 {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-panel p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .info-panel .highlight {
+    color: #f0c060;
+  }
+
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .speed-display {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    min-width: 30px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="title-bar">
+  <h1>TYCHONIC SYSTEM</h1>
+  <div class="subtitle">티코 브라헤 절충 모델 &mdash; AD 1588</div>
+</div>
+
+<div class="legend" id="legend">
+  <h3>천체</h3>
+  <div class="legend-group-title">지구 중심 궤도</div>
+  <div id="legend-geocentric"></div>
+  <div class="legend-group-title">태양 중심 궤도</div>
+  <div id="legend-heliocentric"></div>
+</div>
+
+<div class="info-panel">
+  <h3>모델 설명</h3>
+  <p>
+    <span class="highlight">티코 브라헤</span>는 지구를 중심에 두되,
+    <span class="highlight">태양이 지구를 공전</span>하고
+    나머지 행성들은 <span class="highlight">태양을 공전</span>하는
+    절충 모델을 제시했다.
+    <span class="highlight">화성의 궤도와 태양의 궤도가 교차</span>한다는
+    사실은 고대의 수정 천구 개념을 부정하는 증거가 되었다.
+    수학적으로 코페르니쿠스 모델과 동치이다.
+  </p>
+</div>
+
+<div class="controls">
+  <label>속도</label>
+  <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1">
+  <span class="speed-display" id="speedDisplay">1.0x</span>
+  <div class="divider"></div>
+  <button class="btn active" id="btnOrbits" onclick="toggleOrbits()">궤도</button>
+  <button class="btn active" id="btnTrails" onclick="toggleTrails()">궤적</button>
+  <button class="btn active" id="btnCrossing" onclick="toggleCrossing()">교차점</button>
+  <button class="btn active" id="btnLabels" onclick="toggleLabels()">라벨</button>
+  <div class="divider"></div>
+  <button class="btn" id="btnPause" onclick="togglePause()">⏸</button>
+</div>
+
+<script>
+// ============================================================
+// Canvas setup
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============================================================
+// State
+// ============================================================
+let showOrbits = true;
+let showTrails = true;
+let showCrossing = true;
+let showLabels = true;
+let paused = false;
+let speedMul = 1;
+let time = 0;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedDisplay = document.getElementById('speedDisplay');
+speedSlider.addEventListener('input', () => {
+  speedMul = parseFloat(speedSlider.value);
+  speedDisplay.textContent = speedMul.toFixed(1) + 'x';
+});
+
+function setBtn(id, active) {
+  document.getElementById(id).classList.toggle('active', active);
+}
+function toggleOrbits()  { showOrbits = !showOrbits;     setBtn('btnOrbits', showOrbits); }
+function toggleTrails()  { showTrails = !showTrails;     setBtn('btnTrails', showTrails); }
+function toggleCrossing(){ showCrossing = !showCrossing; setBtn('btnCrossing', showCrossing); }
+function toggleLabels()  { showLabels = !showLabels;     setBtn('btnLabels', showLabels); }
+function togglePause()   {
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? '▶' : '⏸';
+}
+
+// ============================================================
+// Stars background
+// ============================================================
+const stars = [];
+for (let i = 0; i < 700; i++) {
+  stars.push({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.4 + 0.2,
+    brightness: Math.random(),
+    twinkleSpeed: Math.random() * 2 + 1,
+    twinklePhase: Math.random() * Math.PI * 2,
+  });
+}
+
+function drawStars(t) {
+  for (const s of stars) {
+    const flicker = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+    const alpha = 0.15 + 0.6 * s.brightness * flicker;
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220, 230, 255, ${alpha})`;
+    ctx.fill();
+  }
+}
+
+// ============================================================
+// Model parameters
+// ============================================================
+function getScale() {
+  return Math.min(W, H) / 2.6;
+}
+
+// Sun's orbit around Earth
+const sunOrbit = {
+  radius: 0.42,       // fraction of scale
+  speed: 1.0,         // base angular speed (1 year)
+};
+
+// Moon's orbit around Earth
+const moonOrbit = {
+  radius: 0.09,
+  speed: 13.37,        // ~13x faster than Sun (Moon orbits ~13x/year)
+};
+
+// Planets orbiting the Sun (radii relative to scale, speeds relative to Sun=1.0)
+const planets = [
+  {
+    name: '수성', nameEn: 'Mercury',
+    color: '#b0a090', glow: 'rgba(176,160,144,0.35)',
+    orbitR: 0.10,      // close to Sun
+    speed: 4.15,       // Mercury orbits ~4x/year
+    size: 3.5,
+    trailLen: 400,
+    trail: [],
+    hueBase: 30, hueRange: 80,
+    group: 'helio',
+  },
+  {
+    name: '금성', nameEn: 'Venus',
+    color: '#f0d8a0', glow: 'rgba(240,216,160,0.4)',
+    orbitR: 0.18,
+    speed: 1.625,      // Venus orbits ~1.6x/year
+    size: 5,
+    trailLen: 500,
+    trail: [],
+    hueBase: 40, hueRange: 70,
+    group: 'helio',
+  },
+  {
+    name: '화성', nameEn: 'Mars',
+    color: '#e06040', glow: 'rgba(224,96,64,0.4)',
+    orbitR: 0.64,      // Mars orbit crosses the Sun's orbit around Earth
+    speed: 0.532,      // Mars orbits ~0.53x/year
+    size: 4.5,
+    trailLen: 900,
+    trail: [],
+    hueBase: 0, hueRange: 90,
+    group: 'helio',
+    crossesSunOrbit: true,
+  },
+  {
+    name: '목성', nameEn: 'Jupiter',
+    color: '#d0b888', glow: 'rgba(208,184,136,0.35)',
+    orbitR: 0.82,
+    speed: 0.0843,     // Jupiter ~12 year orbit
+    size: 7,
+    trailLen: 1000,
+    trail: [],
+    hueBase: 30, hueRange: 60,
+    group: 'helio',
+  },
+  {
+    name: '토성', nameEn: 'Saturn',
+    color: '#c8a860', glow: 'rgba(200,168,96,0.3)',
+    orbitR: 0.98,
+    speed: 0.0339,     // Saturn ~29 year orbit
+    size: 6.5,
+    trailLen: 1100,
+    trail: [],
+    hueBase: 40, hueRange: 50,
+    group: 'helio',
+    hasRing: true,
+  },
+];
+
+// Moon and Sun for legend
+const moonData = {
+  name: '달', nameEn: 'Luna',
+  color: '#c8c8d0', glow: 'rgba(200,200,210,0.4)',
+  group: 'geo',
+};
+const sunData = {
+  name: '태양', nameEn: 'Sol',
+  color: '#ffd040', glow: 'rgba(255,200,50,0.6)',
+  group: 'geo',
+};
+
+// Build legend
+const legendGeo = document.getElementById('legend-geocentric');
+const legendHelio = document.getElementById('legend-heliocentric');
+
+function addLegendItem(container, name, nameEn, color, glow) {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `
+    <div class="legend-dot" style="background:${color};box-shadow:0 0 6px ${glow}"></div>
+    <div class="legend-label">${name}<small>${nameEn}</small></div>
+  `;
+  container.appendChild(item);
+}
+
+addLegendItem(legendGeo, moonData.name, moonData.nameEn, moonData.color, moonData.glow);
+addLegendItem(legendGeo, sunData.name, sunData.nameEn, sunData.color, sunData.glow);
+for (const p of planets) {
+  addLegendItem(legendHelio, p.name, p.nameEn, p.color, p.glow);
+}
+
+// ============================================================
+// Moon trail
+// ============================================================
+let moonTrail = [];
+const moonTrailLen = 250;
+
+// ============================================================
+// Drawing helpers
+// ============================================================
+function drawDashedCircle(centerX, centerY, r, color, alpha, dashLen) {
+  ctx.beginPath();
+  ctx.setLineDash(dashLen || [4, 6]);
+  ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+}
+
+function drawSolidOrbit(centerX, centerY, r, color, alpha) {
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = 0.7;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawGlowCircle(x, y, r, color, glowColor, glowR) {
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, glowR || r * 4);
+  grad.addColorStop(0, glowColor);
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(x, y, glowR || r * 4, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawTrail(trail, hueBase, hueRange) {
+  if (trail.length < 3) return;
+  const len = trail.length;
+  for (let i = 1; i < len; i++) {
+    const t = i / len;
+    const hue = (hueBase + t * hueRange) % 360;
+    const sat = 70 + 20 * Math.sin(t * Math.PI);
+    const light = 50 + 15 * t;
+    const alpha = t * 0.55;
+    const width = 0.6 + t * 1.6;
+
+    ctx.beginPath();
+    ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+    ctx.lineTo(trail[i].x, trail[i].y);
+    ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+function drawSaturnRing(x, y, size) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, size * 2.2, size * 0.7, -0.3, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(200,180,120,0.5)';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+}
+
+function drawLabel(text, x, y, color) {
+  ctx.font = '12px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = color || 'rgba(255,255,255,0.7)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(text, x, y);
+}
+
+// ============================================================
+// Draw Earth
+// ============================================================
+function drawEarth() {
+  // Outer glow
+  const grad3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 55);
+  grad3.addColorStop(0, 'rgba(80, 150, 255, 0.12)');
+  grad3.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 55, 0, Math.PI * 2);
+  ctx.fillStyle = grad3;
+  ctx.fill();
+
+  // Mid glow
+  const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
+  grad2.addColorStop(0, 'rgba(80, 150, 255, 0.22)');
+  grad2.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+  ctx.fillStyle = grad2;
+  ctx.fill();
+
+  // Earth body
+  const grad = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, 13);
+  grad.addColorStop(0, '#6eb5ff');
+  grad.addColorStop(0.5, '#3a80d0');
+  grad.addColorStop(1, '#1a4080');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Specular
+  ctx.beginPath();
+  ctx.arc(cx - 3, cy - 4, 4.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fill();
+
+  if (showLabels) {
+    drawLabel('지구', cx, cy + 20, 'rgba(110,181,255,0.8)');
+  }
+}
+
+// ============================================================
+// Draw Sun with corona effect
+// ============================================================
+function drawSun(x, y, t) {
+  // Corona rays
+  const rayCount = 16;
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (i / rayCount) * Math.PI * 2 + t * 0.3;
+    const len = 22 + 8 * Math.sin(t * 3 + i * 1.5);
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * 11, y + Math.sin(angle) * 11);
+    ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+    ctx.strokeStyle = 'rgba(255, 200, 50, 0.1)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // Pulsating corona
+  const coronaPulse = 1.0 + 0.15 * Math.sin(t * 2.5);
+
+  // Multi glow
+  for (let r = 50 * coronaPulse; r >= 15; r -= 7) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(255, 200, 50, ${0.06 + (50 - r) * 0.008})`);
+    g.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  // Sun body gradient
+  const sg = ctx.createRadialGradient(x - 2, y - 2, 0, x, y, 11);
+  sg.addColorStop(0, '#fff8e0');
+  sg.addColorStop(0.3, '#ffd040');
+  sg.addColorStop(0.7, '#f0a020');
+  sg.addColorStop(1, '#c07010');
+  ctx.beginPath();
+  ctx.arc(x, y, 11, 0, Math.PI * 2);
+  ctx.fillStyle = sg;
+  ctx.fill();
+}
+
+// ============================================================
+// Draw orbit crossing zones (Mars orbit intersects Sun's orbit)
+// ============================================================
+function drawOrbitCrossings(sunX, sunY, scale, t) {
+  const sunOrbitR = sunOrbit.radius * scale;
+
+  for (const planet of planets) {
+    if (!planet.crossesSunOrbit) continue;
+    const planetOrbitR = planet.orbitR * scale;
+
+    // Distance between Earth (center) and Sun
+    const dx = sunX - cx;
+    const dy = sunY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if orbits actually intersect
+    // Mars orbit (centered on Sun) and Sun orbit (centered on Earth)
+    // They intersect if |r1 - r2| < dist < r1 + r2
+    if (dist < sunOrbitR + planetOrbitR && dist > Math.abs(sunOrbitR - planetOrbitR)) {
+      // Find intersection points using circle-circle intersection
+      const a = (sunOrbitR * sunOrbitR - planetOrbitR * planetOrbitR + dist * dist) / (2 * dist);
+      const hSq = sunOrbitR * sunOrbitR - a * a;
+      if (hSq < 0) continue;
+      const h = Math.sqrt(hSq);
+
+      // Direction from Earth to Sun
+      const ux = dx / dist;
+      const uy = dy / dist;
+
+      // Midpoint on the line between centers at distance 'a' from Earth
+      const mx = cx + a * ux;
+      const my = cy + a * uy;
+
+      // Two intersection points
+      const ix1 = mx + h * (-uy);
+      const iy1 = my + h * ux;
+      const ix2 = mx - h * (-uy);
+      const iy2 = my - h * ux;
+
+      // Draw glowing markers at intersection points
+      const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+      const glowSize = 16 + 6 * pulse;
+
+      // Intersection point 1
+      const g1 = ctx.createRadialGradient(ix1, iy1, 0, ix1, iy1, glowSize);
+      g1.addColorStop(0, `rgba(255, 100, 60, ${0.25 + 0.15 * pulse})`);
+      g1.addColorStop(0.5, `rgba(255, 80, 40, ${0.1 + 0.08 * pulse})`);
+      g1.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(ix1, iy1, glowSize, 0, Math.PI * 2);
+      ctx.fillStyle = g1;
+      ctx.fill();
+
+      // Cross marker 1
+      ctx.save();
+      ctx.translate(ix1, iy1);
+      ctx.rotate(Math.PI / 4);
+      const crossSize = 5 + 2 * pulse;
+      ctx.beginPath();
+      ctx.moveTo(-crossSize, 0); ctx.lineTo(crossSize, 0);
+      ctx.moveTo(0, -crossSize); ctx.lineTo(0, crossSize);
+      ctx.strokeStyle = `rgba(255, 120, 60, ${0.5 + 0.3 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Intersection point 2
+      const g2 = ctx.createRadialGradient(ix2, iy2, 0, ix2, iy2, glowSize);
+      g2.addColorStop(0, `rgba(255, 100, 60, ${0.25 + 0.15 * pulse})`);
+      g2.addColorStop(0.5, `rgba(255, 80, 40, ${0.1 + 0.08 * pulse})`);
+      g2.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(ix2, iy2, glowSize, 0, Math.PI * 2);
+      ctx.fillStyle = g2;
+      ctx.fill();
+
+      // Cross marker 2
+      ctx.save();
+      ctx.translate(ix2, iy2);
+      ctx.rotate(Math.PI / 4);
+      ctx.beginPath();
+      ctx.moveTo(-crossSize, 0); ctx.lineTo(crossSize, 0);
+      ctx.moveTo(0, -crossSize); ctx.lineTo(0, crossSize);
+      ctx.strokeStyle = `rgba(255, 120, 60, ${0.5 + 0.3 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw an arc segment on the Sun's orbit near the crossing zone
+      // Highlight the portion of the Sun's orbit that's within the Mars orbit zone
+      const angle1 = Math.atan2(iy1 - cy, ix1 - cx);
+      const angle2 = Math.atan2(iy2 - cy, ix2 - cx);
+
+      // Crossing arc on Sun's orbit
+      ctx.beginPath();
+      ctx.arc(cx, cy, sunOrbitR, angle1, angle2);
+      ctx.strokeStyle = `rgba(255, 100, 50, ${0.15 + 0.1 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Crossing arc on Mars's orbit
+      const mAngle1 = Math.atan2(iy1 - sunY, ix1 - sunX);
+      const mAngle2 = Math.atan2(iy2 - sunY, ix2 - sunX);
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, planetOrbitR, mAngle1, mAngle2);
+      ctx.strokeStyle = `rgba(224, 96, 64, ${0.15 + 0.1 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Labels
+      if (showLabels) {
+        ctx.font = '10px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = `rgba(255, 120, 60, ${0.5 + 0.2 * pulse})`;
+        ctx.textAlign = 'center';
+        ctx.fillText('교차', ix1, iy1 - 14);
+        ctx.fillText('교차', ix2, iy2 - 14);
+      }
+    }
+  }
+}
+
+// ============================================================
+// Draw orbits around Sun (moving with Sun)
+// ============================================================
+function drawPlanetOrbitsAroundSun(sunX, sunY, scale) {
+  for (const planet of planets) {
+    const r = planet.orbitR * scale;
+    // Slightly different style for Mars (crossing orbit)
+    if (planet.crossesSunOrbit) {
+      drawDashedCircle(sunX, sunY, r, planet.color, 0.18, [5, 6]);
+    } else {
+      drawDashedCircle(sunX, sunY, r, planet.color, 0.12, [3, 8]);
+    }
+  }
+}
+
+// ============================================================
+// Main draw loop
+// ============================================================
+function draw(timestamp) {
+  const dt = 0.004 * speedMul;
+  if (!paused) time += dt;
+
+  const scale = getScale();
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Deep space background
+  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+  bgGrad.addColorStop(0, '#0a0a1e');
+  bgGrad.addColorStop(0.5, '#050510');
+  bgGrad.addColorStop(1, '#000005');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  drawStars(time);
+
+  // ---- Compute Sun position (orbits Earth) ----
+  const sunAngle = time * sunOrbit.speed;
+  const sunR = sunOrbit.radius * scale;
+  const sunX = cx + sunR * Math.cos(sunAngle);
+  const sunY = cy + sunR * Math.sin(sunAngle);
+
+  // ---- Compute Moon position (orbits Earth) ----
+  const moonAngle = time * moonOrbit.speed;
+  const moonR = moonOrbit.radius * scale;
+  const moonX = cx + moonR * Math.cos(moonAngle);
+  const moonY = cy + moonR * Math.sin(moonAngle);
+
+  // ---- Draw orbits ----
+  if (showOrbits) {
+    // Moon orbit around Earth
+    drawDashedCircle(cx, cy, moonR, '#c8c8d0', 0.12, [3, 6]);
+
+    // Sun orbit around Earth (golden, more prominent)
+    drawDashedCircle(cx, cy, sunR, '#ffd040', 0.18, [4, 7]);
+
+    // Planet orbits around the Sun (these move with the Sun!)
+    drawPlanetOrbitsAroundSun(sunX, sunY, scale);
+  }
+
+  // ---- Draw orbit crossing zones ----
+  if (showCrossing) {
+    drawOrbitCrossings(sunX, sunY, scale, time);
+  }
+
+  // ---- Draw Moon trail ----
+  if (!paused) {
+    moonTrail.push({ x: moonX, y: moonY });
+    if (moonTrail.length > moonTrailLen) moonTrail.shift();
+  }
+  if (showTrails) {
+    drawTrail(moonTrail, 220, 60);
+  }
+
+  // ---- Draw Moon ----
+  drawGlowCircle(moonX, moonY, 4, '#c8c8d0', 'rgba(200,200,210,0.35)', 14);
+  // Specular
+  ctx.beginPath();
+  ctx.arc(moonX - 1.2, moonY - 1.5, 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fill();
+  if (showLabels) {
+    drawLabel('달', moonX, moonY + 10, 'rgba(200,200,220,0.8)');
+  }
+
+  // ---- Draw planet trails (computed from their positions around Sun) ----
+  for (const planet of planets) {
+    const pAngle = time * planet.speed;
+    const pR = planet.orbitR * scale;
+    const px = sunX + pR * Math.cos(pAngle);
+    const py = sunY + pR * Math.sin(pAngle);
+
+    // Trail
+    if (!paused) {
+      planet.trail.push({ x: px, y: py });
+      if (planet.trail.length > planet.trailLen) planet.trail.shift();
+    }
+    if (showTrails) {
+      drawTrail(planet.trail, planet.hueBase, planet.hueRange);
+    }
+
+    // Planet body
+    drawGlowCircle(px, py, planet.size, planet.color, planet.glow, planet.size * 3.5);
+
+    // Specular highlight
+    ctx.beginPath();
+    ctx.arc(px - planet.size * 0.25, py - planet.size * 0.3, planet.size * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fill();
+
+    // Saturn ring
+    if (planet.hasRing) {
+      drawSaturnRing(px, py, planet.size);
+    }
+
+    // Label
+    if (showLabels) {
+      drawLabel(planet.name, px, py + planet.size + 6, planet.color);
+    }
+
+    // Draw connecting line from Sun to planet (very subtle, shows gravitational link)
+    ctx.beginPath();
+    ctx.moveTo(sunX, sunY);
+    ctx.lineTo(px, py);
+    ctx.strokeStyle = `rgba(255, 200, 50, 0.04)`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // ---- Draw Sun (on top of orbits but below Earth) ----
+  drawSun(sunX, sunY, time);
+  if (showLabels) {
+    drawLabel('태양', sunX, sunY + 18, 'rgba(255,200,50,0.85)');
+  }
+
+  // ---- Draw connecting line Earth-Sun (subtle) ----
+  ctx.beginPath();
+  ctx.setLineDash([3, 6]);
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(sunX, sunY);
+  ctx.strokeStyle = 'rgba(255, 200, 50, 0.08)';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ---- Draw Earth on top ----
+  drawEarth();
+
+  // ---- Outer celestial sphere ----
+  const sphereR = 1.08 * scale;
+  ctx.beginPath();
+  ctx.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Zodiac markers
+  const zodiacNames = ['\u2648','\u2649','\u264A','\u264B','\u264C','\u264D','\u264E','\u264F','\u2650','\u2651','\u2652','\u2653'];
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const zx = cx + (sphereR + 14) * Math.cos(a);
+    const zy = cy + (sphereR + 14) * Math.sin(a);
+    ctx.font = '14px serif';
+    ctx.fillStyle = 'rgba(255,220,150,0.1)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(zodiacNames[i], zx, zy);
+
+    const tx1 = cx + sphereR * Math.cos(a);
+    const ty1 = cy + sphereR * Math.sin(a);
+    const tx2 = cx + (sphereR + 5) * Math.cos(a);
+    const ty2 = cy + (sphereR + 5) * Math.sin(a);
+    ctx.beginPath();
+    ctx.moveTo(tx1, ty1);
+    ctx.lineTo(tx2, ty2);
+    ctx.strokeStyle = 'rgba(255,220,150,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
